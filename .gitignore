@@ -24,3 +24,15 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+
+# Game dependencies, save files, and local episodes
+*.dll
+*.dylib
+*.so
+*.dsv
+*.dsvx
+*.sav
+data/episodes/*
+!data/episodes/.gitkeep
+src/DspAgentBridge/obj/
+src/DspAgentBridge/bin/

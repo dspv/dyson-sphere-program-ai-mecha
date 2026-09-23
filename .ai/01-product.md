@@ -1,63 +1,35 @@
-# [Project] — Product
+# Product and Acceptance
 
-<!-- SKELETON. Replace every bracketed placeholder. Delete these comments as you go.
-     This file answers "what is this and what does it promise". It is read on every
-     task, so it must be short enough to actually be read every time. -->
-
-<!-- One line placing this file: what it owns, and where the adjacent facts live. -->
-
-[What this file covers.] The [mechanism] is in [02-...]; the money is in [05-...].
+This file owns product scope and promises. [Architecture](02-architecture.md) owns implementation; [roadmap](03-roadmap.md) owns sequencing; [verification](10-verification.md) owns evidence.
 
 ## One-liner
 
-<!-- The sentence you would send to a stranger. Copy it from the spec verbatim if the
-     spec has one — do not improve it here without saying so. -->
+A local agent observes and acts in a visible Dyson Sphere Program game through a limited BepInEx bridge, then verifies its goals from game measurements.
 
-[One sentence.]
+## Core loop
 
-## The core loop
-
-<!-- The whole product as a flow. If it does not fit in a code block, the product is
-     not defined tightly enough yet. -->
-
-```
-[step → step → step]
+```text
+visible game → bounded snapshot → goal and plan → dry-run check → one action → observed result → journal → repeat
 ```
 
-**Everything else is out of scope.** [Link to where the cut order lives, if there is one.]
+The user watches the game and can pause or stop the agent. The developer agent, in-game AI agent, and bridge are distinct components.
 
-## [The central design choice]
+## First acceptance target
 
-<!-- Every product has one or two choices that everything else follows from. Name them
-     here, with the reasoning and the cost. This is the section a new engineer reads to
-     understand why the product is shaped this way rather than the obvious way. -->
+On a separate prepared save in ordinary construction mode with Dark Fog disabled, the agent must locate iron, build mining, power, transport, and smelting through normal mechanics, set the recipe, and demonstrate sustained measured iron-ingot output. Prepared inventory and researched technologies may be part of the starting save. Neither bridge nor agent may create free items during the run. Record the seed, resource settings, and game version; keep the original save separate from experimental copies.
 
-[What was chosen, why, and what it costs.]
-
-## What the user gets
-
-<!-- The deliverable, concretely. What appears on screen or arrives in their hands. -->
-
-[Concrete outputs.]
-
-## Free tier / limits
-
-<!-- If anything is free or capped: what, how much, and how the cap is enforced.
-     State enforcement explicitly — a cap the client can edit is not a cap. -->
-
-[What is free, what the limit is, where it is enforced.]
+The MVP is accepted only after development stages A–D in [03-roadmap.md](03-roadmap.md) have run in the real visible client. A compiled bridge or offline test is a narrower result.
 
 ## Trust contract
 
-<!-- The promises the product makes that must be enforced by code rather than intent.
-     Each line is a testable behaviour. If you cannot name the test, it is marketing,
-     not a contract. -->
+- A `plan_*` request only reads state and calculates an option; it never changes the world.
+- The bridge validates the loaded save, session, planet, snapshot, bounds, and game prerequisites before mutation.
+- Network handling queues work; game objects are accessed on the game thread.
+- Each action returns an operation identity and observed result, including partial completion.
+- Unknown information stays unknown; unscouted systems never appear as explored facts.
+- The OpenAI key stays in the external process, never inside the game or bridge config.
+- The human can pause, resume, cancel an operation, or stop the process.
 
-- **[Promise]** — [what enforces it]
+## Scope boundary
 
-## Out of scope
-
-<!-- Explicit non-goals. This section prevents scope creep more effectively than any
-     other, because it gives a reviewer something to point at. -->
-
-- [Not building this]
+Combat and technology dependent on Dark Fog drops are excluded. High-frequency keyboard control, direct save editing, injected resources, hidden-map reads, and arbitrary C# execution from the model are excluded. [03-roadmap.md](03-roadmap.md) describes desired later capabilities, not MVP claims.

@@ -31,5 +31,9 @@ docs-check: ## Fail if any markdown table is unaligned (CI gate)
 docs-links: ## Fail if any relative markdown link does not resolve
 	@python3 scripts/check-links.py $(DOCS)
 
+.PHONY: test
+test: ## Run offline client tests
+	@python3 -m unittest discover -s tests -v
+
 .PHONY: check
-check: docs-check docs-links ## Everything CI runs
+check: docs-check docs-links test ## Documentation and offline client checks

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "status": "desired_not_implemented",
+  "milestones": [
+    {"id": "starter_industry", "requires": [], "done_when": ["iron_ore_flow_observed", "iron_ingot_output_sustained"]},
+    {"id": "blue_science", "requires": ["starter_industry"], "done_when": ["blue_matrix_output_sustained", "blue_research_completed"]},
+    {"id": "first_mall", "requires": ["starter_industry"], "done_when": ["bounded_building_stock", "stock_replenishes_after_withdrawal"]},
+    {"id": "red_science", "requires": ["blue_science"], "done_when": ["red_matrix_output_sustained", "red_research_completed"]},
+    {"id": "titanium_expedition", "requires": ["red_science"], "done_when": ["titanium_delivered_by_mecha", "safe_return_observed"]},
+    {"id": "yellow_science", "requires": ["titanium_expedition"], "done_when": ["yellow_matrix_output_sustained", "yellow_research_completed"]},
+    {"id": "interplanetary_logistics", "requires": ["yellow_science"], "done_when": ["titanium_arrival_observed", "delivery_sustained"]},
+    {"id": "purple_science", "requires": ["yellow_science"], "done_when": ["purple_matrix_output_sustained", "purple_research_completed"]},
+    {"id": "green_science", "requires": ["purple_science"], "done_when": ["green_matrix_output_sustained", "warper_stock_observed"]},
+    {"id": "interstellar_resources", "requires": ["green_science"], "done_when": ["resource_arrival_from_other_system_observed"]},
+    {"id": "first_sphere_progress", "requires": ["green_science"], "done_when": ["sphere_progress_increases_in_game"]},
+    {"id": "white_science", "requires": ["first_sphere_progress"], "done_when": ["white_matrix_output_sustained", "mission_completed_research_observed"]}
+  ]
+}
