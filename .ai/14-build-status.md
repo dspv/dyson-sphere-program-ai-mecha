@@ -29,9 +29,14 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - The repository was a documentation template before this work. The source specification is archived in `docs/source-spec.txt`.
 - macOS inspection found no DSP install or `dotnet` command in the local path. The target game runs on the owner's separate Windows client.
 - Public BepInEx, BuildToolOpt, BlueprintTweaks, and Spherewright sources provide research leads; no installed game signature has been verified. Spherewright may supply the guarded game action surface, pending Windows compatibility checks.
-- The read-only bridge bootstrap source and local client exist. A desired, non-executable milestone graph is encoded in `data/roadmap.json`. The bridge has not been compiled or loaded; offline checks pass. This is not a working game mod.
+- The read-only bridge bootstrap source, local client, and durable command journal exist. A desired, non-executable milestone graph is encoded in `data/roadmap.json`. The bridge has not been compiled or loaded; offline checks pass. This is not a working game mod.
 
 ## Log
+
+### 2026-09-23 — Durable command recording added
+
+Added a local SQLite journal that deduplicates commands by session and idempotency key, prevents rewriting terminal outcomes, and flags unresolved operations after a save/session change. Offline checks cover restart and reconciliation; no DSP action uses this journal yet.
+
 
 ### 2026-09-23 — Project documentation and research started
 

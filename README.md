@@ -4,7 +4,7 @@ A work-in-progress BepInEx bridge and local agent intended to build and verify f
 
 ## Current status
 
-Read-only bootstrap source and a local client exist, but no plugin has been compiled or loaded in the game, and no gameplay milestone has been verified. This repository is being prepared on macOS; integration must run against the owner's Windows DSP installation. See [build status](.ai/14-build-status.md).
+Read-only bootstrap source, a local client, and a durable command journal exist, but no plugin has been compiled or loaded in the game, and no gameplay milestone has been verified. This repository is being prepared on macOS; integration must run against the owner's Windows DSP installation. See [build status](.ai/14-build-status.md).
 
 | Track             | Progress |
 | ----------------- | -------- |

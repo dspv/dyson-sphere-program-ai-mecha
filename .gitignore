@@ -36,3 +36,6 @@ data/episodes/*
 !data/episodes/.gitkeep
 src/DspAgentBridge/obj/
 src/DspAgentBridge/bin/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

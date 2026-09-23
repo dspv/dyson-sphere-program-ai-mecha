@@ -16,7 +16,7 @@ Supporting documents: [research](../docs/RESEARCH.md) owns external API findings
 
 ## Current state
 
-**Last updated: 2026-09-23. Phase: foundation.** The corpus, health-only bridge source, and local client are built on macOS and the client is tested offline. No DSP installation, Windows game version, game DLL, or live game acceptance run is available here. The exact next action and component states are in [14-build-status.md](14-build-status.md).
+**Last updated: 2026-09-23. Phase: foundation.** The corpus, health-only bridge source, local client, and durable journal are built on macOS and tested offline. No DSP installation, Windows game version, game DLL, or live game acceptance run is available here. The exact next action and component states are in [14-build-status.md](14-build-status.md).
 
 ## Rules of engagement
 

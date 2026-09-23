@@ -14,7 +14,7 @@ OpenAI Responses API
 
 ## Current bootstrap
 
-`src/DspAgentBridge` currently exposes only a loopback health response with `bootstrap_only` status. `src/Agent/dsp_agent` validates that response. The gameplay contract below is a design target; no observation or action route exists yet.
+`src/DspAgentBridge` currently exposes only a loopback health response with `bootstrap_only` status. `src/Agent/dsp_agent` validates that response and now includes a durable SQLite command journal. The journal deduplicates command keys, preserves terminal results, and marks unresolved operations for reconciliation when a session changes. It does not prove a game action succeeded without a fresh bridge observation. The gameplay contract below is a design target; no observation or action route exists yet.
 
 ## Bridge
 
