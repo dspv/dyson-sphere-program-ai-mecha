@@ -16,6 +16,8 @@ For each run, record game version, plugin build, BepInEx version, save seed and 
 
 The first Windows check is stage A: build against that installation's managed DLLs and BepInEx libraries, install the plugin, launch a copied test save, call the observer API, and compare every returned field with the game. Stop at the first uncertain signature and update [research](../docs/RESEARCH.md). Stage B and later require separate evidence.
 
+The optional Spherewright probe can establish only MCP connectivity, available tools, and reported session state. Compare those fields with the visible client and retain the stderr log. It does not prove a game action or production. For an iron-ingot milestone, the verifier requires an adapter to a cumulative game production counter tied to one session, planet, entity, and item. Set the window duration and required count in the experiment record; a positive inventory delta is not evidence of production. No such counter adapter has been verified against the owner's game.
+
 ## Strategy experiments
 
 Episode comparison follows this order: legal and continuable gameplay; milestone completion; sustained output; then game time, resources, actions, and API cost. A candidate skill is tested from a restored copy of the same checkpoint as its baseline. A failure or counterexample stays in the journal and in [strategies](../docs/STRATEGIES.md) before promotion.

@@ -14,7 +14,9 @@ OpenAI Responses API
 
 ## Current bootstrap
 
-`src/DspAgentBridge` currently exposes only a loopback health response with `bootstrap_only` status. `src/Agent/dsp_agent` validates that response and now includes a durable SQLite command journal. The journal deduplicates command keys, preserves terminal results, and marks unresolved operations for reconciliation when a session changes. It does not prove a game action succeeded without a fresh bridge observation. The gameplay contract below is a design target; no observation or action route exists yet.
+`src/DspAgentBridge` currently exposes only a loopback health response with `bootstrap_only` status. `src/Agent/dsp_agent` validates that response and includes a durable SQLite command journal. The journal deduplicates command keys, preserves terminal results, and marks unresolved operations for reconciliation when a session changes. It does not prove a game action succeeded without a fresh bridge observation.
+
+The agent also has a bounded read-only MCP stdio client for probing a Spherewright installation. It negotiates MCP `2025-06-18`, lists tools, reads the upstream opening playbook, and calls only an explicit inspection allowlist. The roadmap planner selects a milestone from explicit tri-state evidence. A production verifier requires positive deltas from one game entity's cumulative counter across multiple game-time windows. A Responses API adapter can request one strictly typed proposal from a configured model; its operations are limited to inspection, planning, pausing, or reporting a blocker. The adapter does not execute the proposal or call game write tools. All of these paths have only offline test evidence. The gameplay contract below remains a design target; no project-owned observation or action route exists yet.
 
 ## Bridge
 

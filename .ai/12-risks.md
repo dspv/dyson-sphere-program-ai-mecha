@@ -30,6 +30,7 @@ Unknowns live here until evidence or an ADR closes them. A target in the [roadma
 - **`OQ-05` — Model/API budget and credentials:** Decided by the owner before enabling paid planning calls. Blocks stage D, not deterministic stages.
 
 - **`OQ-06` — Reuse or extend Spherewright:** Decided by checking its released tools against the owner's game and iron-line acceptance run. Blocks committing to a game-action implementation path.
+- **`OQ-07` — Production counter source:** Decided by finding a cumulative game counter for the exact iron smelter and output item, then comparing it with the visible UI across save and session changes. Blocks automated production acceptance.
 
 ## What would falsify the plan
 
