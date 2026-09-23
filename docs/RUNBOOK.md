@@ -6,7 +6,7 @@ This runbook describes the intended handoff. Current build state is in [build st
 
 Use Windows-native PowerShell with Codex or Orca so the agent can inspect the actual DSP installation. Install Git, Python, Node.js LTS, and a .NET SDK. Install Codex CLI with `npm install -g @openai/codex@latest`, run `codex` once, and sign in. Orca is optional: install its Windows app, add this repository, select Codex as the agent, and use the existing Windows Codex login. Orca runs Codex in the selected worktree; it is the development interface, not the in-game agent.
 
-The current Mac workspace contains uncommitted project files. A plain Git clone of the remote does not include them until they are committed and pushed. Transfer the workspace archive prepared for this handoff or sync those changes through Git before opening the project on Windows. Keep the project on a Windows drive for direct access to DSP and PowerShell. From the project root, run `py -m unittest discover -s tests -v` before game setup.
+The foundation is committed locally but has not been pushed to the remote. A plain Git clone of the remote does not yet include it. Transfer the workspace archive prepared for this handoff, which includes Git history, or push/sync the commit before opening the project on Windows. Keep the project on a Windows drive for direct access to DSP and PowerShell. From the project root, run `py -m unittest discover -s tests -v` before game setup.
 
 ## Prepare the game machine
 
