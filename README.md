@@ -4,15 +4,15 @@ A work-in-progress BepInEx bridge and local agent intended to build and verify f
 
 ## Current status
 
-Read-only bootstrap source, local HTTP and MCP clients, a durable command journal, and offline planning components exist. No plugin has been compiled or loaded in the game, no live API planning call has been made, and no gameplay milestone has been verified. This repository is being prepared on macOS; integration must run against the owner's Windows DSP installation. See [build status](.ai/14-build-status.md).
+The read-only bridge is compiled and loaded in the Windows DSP client. Stage A observation matched visible UI checks on copied ordinary saves, including planet, geographic position, empty and populated inventory, nearby iron reserves, and factory belts. Large factories report partial scans explicitly. No bridge gameplay action or production milestone has been verified. The local MCP client, journal, planner, and verifier have offline test coverage. See [build status](.ai/14-build-status.md).
 
 | Track             | Progress |
 | ----------------- | -------- |
 | Documentation     | 50%      |
 | Protocol          | 20%      |
-| Bridge            | 0%       |
+| Bridge            | 50%      |
 | Agent             | 0%       |
-| Game verification | 0%       |
+| Game verification | 20%      |
 
 ## Start here
 

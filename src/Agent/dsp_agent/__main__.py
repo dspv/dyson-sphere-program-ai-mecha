@@ -3,7 +3,7 @@
 import argparse
 import json
 import sys
-from .client import BridgeError, read_health
+from .client import BridgeError, read_health, read_observation
 from .mcp_stdio import McpError, StdioMcpClient
 
 
@@ -12,6 +12,8 @@ def main(argv=None):
     commands = parser.add_subparsers(dest="command")
     health = commands.add_parser("health", help="Read the project bootstrap endpoint")
     health.add_argument("--bridge", default="http://127.0.0.1:38741")
+    observe = commands.add_parser("observe", help="Read bounded game observation")
+    observe.add_argument("--bridge", default="http://127.0.0.1:38741")
     spherewright = commands.add_parser("spherewright-probe", help="Inspect Spherewright MCP without game writes")
     spherewright.add_argument("--exe", required=True, help="Path to Spherewright.Mcp.exe")
     spherewright.add_argument("--log", help="Optional local stderr log path")
@@ -19,6 +21,8 @@ def main(argv=None):
     try:
         if args.command in (None, "health"):
             result = read_health(args.bridge if args.command else "http://127.0.0.1:38741")
+        elif args.command == "observe":
+            result = read_observation(args.bridge)
         else:
             with StdioMcpClient(args.exe, log_path=args.log) as client:
                 tools = client.list_tools()

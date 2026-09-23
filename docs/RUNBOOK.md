@@ -1,36 +1,37 @@
 # Windows Runbook
 
-This runbook describes the intended handoff. Current build state is in [build status](../.ai/14-build-status.md); no plugin compilation or installation has been verified.
+This runbook covers the Windows installation and the read-only bridge. Current validation limits are in [build status](../.ai/14-build-status.md).
 
 ## Development agent on Windows
 
 Use Windows-native PowerShell with Codex or Orca so the agent can inspect the actual DSP installation. Install Git, Python, Node.js LTS, and a .NET SDK. Install Codex CLI with `npm install -g @openai/codex@latest`, run `codex` once, and sign in. Orca is optional: install its Windows app, add this repository, select Codex as the agent, and use the existing Windows Codex login. Orca runs Codex in the selected worktree; it is the development interface, not the in-game agent.
 
-The foundation is on the `master` branch at `git@github.com:dspv/dyson-sphere-program-ai-mecha.git`. Clone it to a Windows drive for direct access to DSP and PowerShell. HTTPS clone is also available at `https://github.com/dspv/dyson-sphere-program-ai-mecha.git` if SSH is not configured. From the project root, run `py -m unittest discover -s tests -v` before game setup.
+The current working checkout is in WSL at `/home/ds/dev/dyson-sphere-program-ai-mecha`. Windows accesses the same files at `\\wsl.localhost\Ubuntu\home\ds\dev\dyson-sphere-program-ai-mecha`; do not create a second uncommitted checkout for native builds. From the project root, run `PYTHONPATH=src/Agent python3 -m unittest discover -s tests -v` in WSL.
 
 ## Prepare the game machine
 
 1. Open the cloned repository on Windows. Record the Git revision.
-2. Locate the DSP installation and record the version shown by the game. Run `powershell -File scripts/inspect-windows.ps1 -GameRoot "C:\Path\To\Dyson Sphere Program"` to inventory local DLLs and BepInEx. Inspect the scripting backend. Do not copy game DLLs into git.
-3. Install a BepInEx distribution matching that game build using the [official installation guide](https://docs.bepinex.dev/master/articles/user_guide/installation/). Launch once and retain `BepInEx/LogOutput.log`.
-4. Install a .NET SDK capable of building the provisional `net472` target. The project restores the .NET Framework reference assemblies from NuGet. Confirm the target against the local managed DLLs before extending the plugin.
-5. Create a separate ordinary test save with Dark Fog disabled. Record seed, resources, version, prepared inventory, and technologies. Keep the pristine save outside test runs and restore copies for each trial.
+2. The current Steam installation is `C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program`. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/inspect-windows.ps1 -GameRoot 'C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program'` from WSL. The latest version record is a lead; compare it with the visible game label. Do not copy game DLLs into git.
+3. BepInEx 5.4.23.5 Windows x64 is installed in this game root. Its startup log is `BepInEx/LogOutput.log`. For another installation, follow the [official installation guide](https://docs.bepinex.dev/master/articles/user_guide/installation/) and check the scripting backend first.
+4. Windows .NET SDK 8.0.425 is installed for this user at `C:\Users\ds\.dotnet\dotnet.exe`. The project restores .NET Framework reference assemblies from NuGet and builds a `net472` plugin against the local game and BepInEx DLLs.
+5. The current ordinary test game uses seed `33434023`, 64 stars, 1× resources, Sandbox off, and Enemy Forces off. Keep `DSP-AI-33434023-Pristine.dsv` outside test runs and restore copies for each trial. It has an empty starting inventory; no prepared building stock or technology has been verified.
 
 ## Bootstrap build and smoke check
 
-The current plugin only exposes `GET http://127.0.0.1:38741/v1/health`. It cannot observe or change DSP state. Its `net472` target is provisional until the installed game's managed runtime is checked. From PowerShell, set paths to the local DLL directories and build:
+The plugin exposes `GET /v1/health` and bounded, read-only `GET /v1/observe`. Several observer fields match a copied save's visible UI; positive inventory and built entities still need comparison. From native PowerShell, build the shared WSL checkout:
 
 ```powershell
-$gameManaged = 'C:\Path\To\Dyson Sphere Program\DSPGAME_Data\Managed'
-$bepinexCore = 'C:\Path\To\Dyson Sphere Program\BepInEx\core'
-dotnet build src/DspAgentBridge/DspAgentBridge.csproj -p:GameManagedDir="$gameManaged" -p:BepInExCoreDir="$bepinexCore"
+$repo = '\\wsl.localhost\Ubuntu\home\ds\dev\dyson-sphere-program-ai-mecha'
+$game = 'C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program'
+Set-Location -LiteralPath $repo
+& "$env:USERPROFILE\.dotnet\dotnet.exe" build src\DspAgentBridge\DspAgentBridge.csproj "-p:GameManagedDir=$game\DSPGAME_Data\Managed" "-p:BepInExCoreDir=$game\BepInEx\core"
 ```
 
-If the installed runtime does not support `net472`, record that finding and change the project target before compiling. Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `BepInEx/plugins/DspAgentBridge/`, start DSP, and check the BepInEx log for the bootstrap listener line. From the repository root, query it with `curl.exe http://127.0.0.1:38741/v1/health` or `python -m dsp_agent` with `PYTHONPATH=src/Agent`. The expected status is `bootstrap_only`; it proves only that the plugin loaded and loopback transport works. Stop the game to stop the listener.
+Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `$game\BepInEx\plugins\DspAgentBridge\`. Start DSP through Steam with `Start-Process 'C:\Program Files (x86)\Steam\steam.exe' -ArgumentList '-applaunch 1366540'`; launching `DSPGAME.exe` directly failed Steam initialization in this environment. Check the BepInEx log for `Loading [DSP Agent Bridge 0.2.0]`. Query from **native PowerShell**: `Invoke-RestMethod http://127.0.0.1:38741/v1/health` and `Invoke-RestMethod http://127.0.0.1:38741/v1/observe`. WSL's own loopback did not reach the Windows listener. Native Windows Python can also run `python -m dsp_agent observe` with `PYTHONPATH` set to the checkout's `src\Agent` directory. Health status `observer_unverified` proves plugin load and transport; a `not_loaded` observation is expected at the menu. `embedded_save_name` is not a reliable loaded filename.
 
 ## Optional Spherewright read-only probe
 
-If the installed DSP version matches a released Spherewright package, install that package following its own instructions and run its MCP executable from the extracted package. The [research record](RESEARCH.md) states the version and release caveats. Run this from the repository root in PowerShell after launching the copied save:
+The installed DSP `0.10.35.29057` is outside released Spherewright 0.3.3's pinned `0.10.34.28529` support. The package is not installed. If a later release explicitly supports this build, follow its own instructions and run its MCP executable from the extracted package. The [research record](RESEARCH.md) owns the compatibility finding. Run this from the repository root in PowerShell after launching the copied save:
 
 ```powershell
 $env:PYTHONPATH = 'src\Agent'

@@ -4,7 +4,6 @@ Unknowns live here until evidence or an ADR closes them. A target in the [roadma
 
 ## Assumptions
 
-- **`ASSUMPTION-01` — Windows DSP is a moddable Mono build.** Falsified if the owner's installed build uses an incompatible scripting backend or BepInEx fails to load. Check the game folder and startup log before choosing a target framework.
 - **`ASSUMPTION-02` — A game-supported construction path can automate the iron line.** Falsified if the installed build exposes no controllable placement route that obeys inventory, construction range, and drone rules. Inspect build tools and run a single-object trial.
 - **`ASSUMPTION-03` — A prepared ordinary save can hold the needed items and research without weakening acceptance.** Falsified if the controlled setup changes mechanics or cannot be reproduced from a documented save copy.
 - **`ASSUMPTION-04` — Loopback HTTP works in the installed Mono runtime.** Falsified by listener startup failure, unresponsive polling, or measured game stalls. ADR-003 permits a transport change.
@@ -23,14 +22,13 @@ Unknowns live here until evidence or an ADR closes them. A target in the [roadma
 
 ## Open questions
 
-- **`OQ-01` — Installed game and BepInEx versions:** Decided by inventory and logs on the owner's Windows machine. Blocks game compilation and stage A.
-- **`OQ-02` — Available game DLL signatures for observation and building:** Decided by inspection of that version and a live trial. Blocks stages A–C.
-- **`OQ-03` — Prepared save details, seed, resource setting, and inventory:** Decided when the owner creates the control save. Blocks the iron acceptance run.
+- **`OQ-02` — Behavior of installed game DLL action signatures:** Stage A read-only fields have copied-save UI comparisons, including positive inventory and belts. Normal movement, mining, and building signatures remain unverified. Blocks completion of stages B–C.
+- **`OQ-03` — Prepared inventory and technologies for the iron experiment:** A pristine ordinary seed `33434023` save exists, but it has no starting items. Obtain needed materials through ordinary gameplay or document a separately prepared ordinary save. Blocks the iron acceptance run.
 - **`OQ-04` — Sustained output window and minimum rate:** Decided from a target set for the experiment and game measurement. Blocks final milestone judgment, not instrumentation.
 - **`OQ-05` — Model/API budget and credentials:** Decided by the owner before enabling paid planning calls. Blocks stage D, not deterministic stages.
 
-- **`OQ-06` — Reuse or extend Spherewright:** Decided by checking its released tools against the owner's game and iron-line acceptance run. Blocks committing to a game-action implementation path.
 - **`OQ-07` — Production counter source:** Decided by finding a cumulative game counter for the exact iron smelter and output item, then comparing it with the visible UI across save and session changes. Blocks automated production acceptance.
+- **`OQ-09` — Reliable loaded-file identity:** `GameMain.gameName` is an embedded label and retained the pristine name after loading a renamed copy. No verified installed API reports the physical loaded filename. Stage B actions must require a fresh session and user-designated experiment context without treating the embedded name as proof of file identity.
 
 ## What would falsify the plan
 

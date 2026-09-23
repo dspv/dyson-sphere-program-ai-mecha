@@ -16,7 +16,7 @@ Supporting documents: [research](../docs/RESEARCH.md) owns external API findings
 
 ## Current state
 
-**Last updated: 2026-09-23. Phase: foundation.** The corpus, health-only bridge source, local HTTP and MCP clients, journal, and offline planning components are built on macOS and tested offline. No DSP installation, Windows game version, game DLL, or live game acceptance run is available here. The exact next action and component states are in [14-build-status.md](14-build-status.md).
+**Last updated: 2026-09-24. Phase: stage B research.** The project bridge builds against the local Mono game and BepInEx DLLs, loads in DSP, and returns read-only observations from copied ordinary saves. Stage A's returned fields matched visible checks, including positive inventory and built belts on a second save; large factory scans signal partial results. No bridge gameplay action or production milestone has been verified. The exact next action and evidence are in [14-build-status.md](14-build-status.md).
 
 ## Rules of engagement
 

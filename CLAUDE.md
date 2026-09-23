@@ -1,6 +1,6 @@
 # Dyson Sphere Program AI Mecha — Agent Context
 
-A BepInEx bridge and local AI agent intended to play a visible, ordinary Dyson Sphere Program save through verified game actions. The first acceptance target is a measured iron-ingot production line. **Status: foundation; no game integration verified.** See [.ai/14-build-status.md](.ai/14-build-status.md).
+A BepInEx bridge and local AI agent intended to play a visible, ordinary Dyson Sphere Program save through verified game actions. The first acceptance target is a measured iron-ingot production line. **Status: read-only bridge loaded; no gameplay milestone verified.** See [.ai/14-build-status.md](.ai/14-build-status.md).
 
 ## Start here
 

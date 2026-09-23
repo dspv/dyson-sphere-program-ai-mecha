@@ -24,7 +24,7 @@ A local agent chooses bounded skills; deterministic bridge code validates and ex
 
 ## ADR-003 — Start with loopback HTTP and versioned JSON
 
-**Date:** 2026-09-23. **Source:** developer choice. **Status:** provisional.
+**Date:** 2026-09-23. **Source:** developer choice. **Status:** superseded by ADR-007.
 
 Loopback HTTP is easy to inspect from Windows and the macOS development environment. A fixed JSON envelope permits contract tests before gameplay. Binding and request limits are required before execution is exposed.
 
@@ -61,3 +61,23 @@ An MIT-licensed bridge already exposes guarded, normal-mechanics game actions fo
 **Rules out:** Duplicating complex write paths from source examples before checking the existing bridge and the installed game. It does not rule out a project-owned plugin if needed.
 
 **Revisit if:** The owner's game version is incompatible, the release lacks required actions, or its safety/protocol model cannot meet the acceptance contract.
+
+## ADR-007 — Use the project bridge on the installed DSP build
+
+**Date:** 2026-09-24. **Source:** Windows installation inventory. **Status:** accepted.
+
+The installed game reports `0.10.35.29057` in its version history; released Spherewright 0.3.3 pins `0.10.34.28529` and BepInEx `5.4.17`. The installed BepInEx is `5.4.23.5`. The released compatibility boundary is enough to avoid installing Spherewright for this game. Build and verify the project bridge against the local DLLs, one capability at a time.
+
+**Rules out:** Treating unreleased Spherewright source as a supported release or probing an unpinned released package in this installation.
+
+**Revisit if:** A Spherewright release explicitly supports this installed DSP build and its safety contract fits the acceptance run.
+
+## ADR-008 — Treat the game name as an embedded label
+
+**Date:** 2026-09-24. **Source:** live copied-save comparison and installed `GameSave.LoadCurrentGame` inspection. **Status:** accepted.
+
+Loading a byte-identical save copy under a different filename kept `GameMain.gameName` equal to the original save's embedded name. The observer labels this value `embedded_save_name` and reports an unknown `loaded_file_name`. Session identity comes from the current ready `GameData` instance and changes on load. Mutating tools must require that session identity and must not accept the embedded label as proof that a safe experiment file is loaded.
+
+**Rules out:** A filename guard based only on `GameMain.gameName` and reporting an unverified physical save path.
+
+**Revisit if:** A local game API or trustworthy load event exposes the actual loaded path and is verified against the game UI or file system.

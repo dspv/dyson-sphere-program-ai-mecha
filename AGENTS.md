@@ -2,7 +2,7 @@
 
 `CLAUDE.md` and `.ai/00-index.md` are authoritative. If these instructions conflict, `CLAUDE.md` wins.
 
-This project builds a BepInEx game bridge and local agent for visible, verifiable play in an ordinary Dyson Sphere Program save. It is in the foundation phase; no game integration has been verified.
+This project builds a BepInEx game bridge and local agent for visible, verifiable play in an ordinary Dyson Sphere Program save. A read-only bridge has loaded in the game, but no gameplay milestone has been verified.
 
 ## Start here
 
