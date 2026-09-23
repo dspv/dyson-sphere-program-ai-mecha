@@ -1,6 +1,6 @@
 # Build Status
 
-**Last updated: 2026-09-24. Phase: stage C research. Next: inspect normal mining and construction APIs, prepare ordinary materials on a copied save, then build one connected iron segment.** The [verification policy](10-verification.md) defines what each status means.
+**Last updated: 2026-09-24. Phase: stage C research. Next: verify a single-entity iron-smelter counter and normal mining/construction APIs, prepare ordinary materials on a copied save, then build one connected iron segment.** The [verification policy](10-verification.md) defines what each status means.
 
 ## Progress by track
 
@@ -20,7 +20,7 @@ These are coarse implementation indicators, not gameplay success rates. The same
 | ----------------- | ----------- |
 | A observer        | verified    |
 | B one action      | verified    |
-| C iron line       | not started |
+| C iron line       | research    |
 | D model control   | not started |
 | E–K later roadmap | not started |
 
@@ -31,8 +31,15 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - Released Spherewright 0.3.3 pins an older DSP build and was not installed. The project bridge is the integration path for this installation (ADR-007).
 - The `net472` bridge loaded through BepInEx and answered health and observer calls from native PowerShell and Windows Python. At the Steam-launched menu, `/v1/observe` returned `not_loaded`; in a copied ordinary save it returned Ancha II, the same latitude/longitude shown in the UI, an empty inventory matching the open panel, and six iron veins totaling 57,655 reserves, matching the hovered cluster. A second copied ordinary save showed positive inventory and factory belts matching the visible factory. The mature save exceeded the scan and result caps, and the response marked both limits. Stage A's returned fields have live UI comparisons.
 - The first project-owned action, a bounded walking order to a nearby vein, visibly moved the mecha on the new game's experiment copy. Invalid vein and stale-session requests were rejected; replaying the same operation ID returned its prior result. Pausing a second move returned a partial result and stopped the order. This verifies stage B only. The MCP client, journal, offline planner, production verifier, and model proposal adapter remain offline-tested; no production run or live paid model call has occurred.
+- The observer now exposes local-planet all-time produced counters for iron ore and iron ingots. Both matched the visible Production Statistics totals on an active copied save, allowing for one item produced between the game-thread read and UI hover. These planet-wide counters include pre-existing production and cannot prove a specific new iron line. The candidate per-assembler total was withheld because it has no visible UI check yet.
 
 ## Log
+
+### 2026-09-24 — Planet production counters checked against the visible UI
+
+On the copied existing save, the bridge's `FactoryProductionStat.productPool[index].total[6]` reported iron ore item `1001` total `321,414` at tick `5,296,509`; the visible Production Statistics panel showed `321,415` on the subsequent hover. Iron ingot item `1101` was `259,131` at tick `5,307,227`, followed by `259,132` in the UI. Each one-item difference is consistent with the active factory advancing between reads. These are local-planet totals, not output from an identified line. A candidate per-assembler output total was removed from the API pending a visible comparison. No mining, construction, or line production was performed by this agent.
+
+The finalized DLL built against the local game and BepInEx assemblies with zero warnings/errors, was installed, and was loaded through Steam. On the copied existing save, the finalized `/v1/observe` returned `status=ok`, planet `? Leonis Minoris III`, and local ore/ingot totals `319,948`/`256,950` at tick `5,274,516`; the unused candidate `/v1/entity` route returned HTTP 404. `make check` passed 23 offline tests. The earlier UI tooltip comparisons establish the counter semantics; this later response establishes that the trimmed DLL still runs in the visible game.
 
 ### 2026-09-24 — Stage B walking action verified in the visible game
 

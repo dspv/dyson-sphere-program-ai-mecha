@@ -88,6 +88,14 @@ Loading a byte-identical save copy under a different filename kept `GameMain.gam
 
 `Player.Order(OrderNode.MoveTo(vein.pos), false)` follows the game's normal walking and order-completion path. The bridge resolves a local vein ID on the game thread, requires the observed session, limits distance to 25 units, refuses a busy or paused player, and exposes a stable operation ID for polling. A live trial moved the mecha from the landing capsule to an iron cluster and matched the visible position. Pausing during a second trial yielded a partial result and stopped the order. This is the stage B action; it does not establish mining or construction capability.
 
+## ADR-010 — Expose planet production totals as context only
+
+**Date:** 2026-09-24. **Source:** copied-save UI comparison. **Status:** accepted.
+
+The installed game's local-planet all-time ore and ingot counters matched the visible Production Statistics tooltips during active production. Expose those counters in the observer as read-only context, with `null` for unavailable or unregistered values. Do not pass a planet aggregate to the single-entity production verifier or use it to claim a new iron line: older factories on the same planet can increase it. A derived assembler total remains out of the API until a visible entity comparison establishes its meaning.
+
+**Revisit if:** A per-entity counter is visibly verified, or a clean copied save and connected line make attribution unambiguous across multiple windows.
+
 **Rules out:** Teleportation, setting player position directly, and interpreting HTTP acceptance as completed movement.
 
 **Revisit if:** The installed game's order semantics change, a normal walking order fails to stop on pause, or a future action API needs a stronger persistent operation model.

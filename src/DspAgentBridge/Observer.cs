@@ -64,6 +64,7 @@ namespace DspAgentBridge
             Inventory(json, player.package);
             NearbyEntities(json, planet, player);
             NearbyVeins(json, planet, player);
+            ProductionTotals(json, planet);
             return json.Append('}').ToString();
         }
 
@@ -194,6 +195,47 @@ namespace DspAgentBridge
                 found++;
             }
             json.Append("],\"result_truncated\":false}");
+        }
+
+        private static void ProductionTotals(StringBuilder json, PlanetData planet)
+        {
+            json.Append(",\"local_production\":");
+            var statistics = GameMain.data.statistics;
+            if (planet.factory == null || statistics == null || statistics.production == null ||
+                statistics.production.factoryStatPool == null || planet.factory.index < 0 ||
+                planet.factory.index >= statistics.production.factoryStatPool.Length)
+            {
+                json.Append("null");
+                return;
+            }
+            var factoryStats = statistics.production.factoryStatPool[planet.factory.index];
+            if (factoryStats == null || factoryStats.productIndices == null || factoryStats.productPool == null)
+            {
+                json.Append("null");
+                return;
+            }
+            json.Append("{\"scope\":\"local_planet\",\"counter_kind\":\"all_time_produced\",\"items\":[");
+            ProductTotal(json, factoryStats, 1001);
+            json.Append(',');
+            ProductTotal(json, factoryStats, 1101);
+            json.Append("]}");
+        }
+
+        private static void ProductTotal(StringBuilder json, FactoryProductionStat stats, int itemId)
+        {
+            json.Append("{\"item_id\":").Append(itemId).Append(",\"count\":");
+            if (itemId >= stats.productIndices.Length)
+            {
+                json.Append("null}");
+                return;
+            }
+            var index = stats.productIndices[itemId];
+            if (index <= 0) json.Append("null}");
+            else if (index < stats.productPool.Length && stats.productPool[index] != null &&
+                     stats.productPool[index].itemId == itemId && stats.productPool[index].total != null &&
+                     stats.productPool[index].total.Length > 6)
+                json.Append(stats.productPool[index].total[6]).Append('}');
+            else json.Append("null}");
         }
 
         private static void Vector(StringBuilder json, Vector3 value)

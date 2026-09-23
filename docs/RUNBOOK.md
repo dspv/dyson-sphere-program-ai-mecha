@@ -18,7 +18,7 @@ The current working checkout is in WSL at `/home/ds/dev/dyson-sphere-program-ai-
 
 ## Bootstrap build and smoke check
 
-The plugin exposes `GET /v1/health`, bounded `GET /v1/observe`, `POST /v1/move-to-vein`, and `GET /v1/operation`. Stages A and B have visible-game comparisons on copied saves. From native PowerShell, build the shared WSL checkout:
+The plugin exposes `GET /v1/health`, bounded `GET /v1/observe`, `POST /v1/move-to-vein`, and `GET /v1/operation`. Stages A and B have visible-game comparisons on copied saves. Observation includes `local_production` with all-time iron ore and ingot totals for the current planet when statistics exist; `null` means the source is unavailable or unregistered. These totals cannot verify one new line in an existing factory. From native PowerShell, build the shared WSL checkout:
 
 ```powershell
 $repo = '\\wsl.localhost\Ubuntu\home\ds\dev\dyson-sphere-program-ai-mecha'
