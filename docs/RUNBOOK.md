@@ -1,6 +1,6 @@
 # Windows Runbook
 
-This runbook covers the Windows installation and the read-only bridge. Current validation limits are in [build status](../.ai/14-build-status.md).
+This runbook covers the Windows installation, observer, and bounded walking action. Current validation limits are in [build status](../.ai/14-build-status.md).
 
 ## Development agent on Windows
 
@@ -18,7 +18,7 @@ The current working checkout is in WSL at `/home/ds/dev/dyson-sphere-program-ai-
 
 ## Bootstrap build and smoke check
 
-The plugin exposes `GET /v1/health` and bounded, read-only `GET /v1/observe`. Several observer fields match a copied save's visible UI; positive inventory and built entities still need comparison. From native PowerShell, build the shared WSL checkout:
+The plugin exposes `GET /v1/health`, bounded `GET /v1/observe`, `POST /v1/move-to-vein`, and `GET /v1/operation`. Stages A and B have visible-game comparisons on copied saves. From native PowerShell, build the shared WSL checkout:
 
 ```powershell
 $repo = '\\wsl.localhost\Ubuntu\home\ds\dev\dyson-sphere-program-ai-mecha'
@@ -27,7 +27,20 @@ Set-Location -LiteralPath $repo
 & "$env:USERPROFILE\.dotnet\dotnet.exe" build src\DspAgentBridge\DspAgentBridge.csproj "-p:GameManagedDir=$game\DSPGAME_Data\Managed" "-p:BepInExCoreDir=$game\BepInEx\core"
 ```
 
-Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `$game\BepInEx\plugins\DspAgentBridge\`. Start DSP through Steam with `Start-Process 'C:\Program Files (x86)\Steam\steam.exe' -ArgumentList '-applaunch 1366540'`; launching `DSPGAME.exe` directly failed Steam initialization in this environment. Check the BepInEx log for `Loading [DSP Agent Bridge 0.2.0]`. Query from **native PowerShell**: `Invoke-RestMethod http://127.0.0.1:38741/v1/health` and `Invoke-RestMethod http://127.0.0.1:38741/v1/observe`. WSL's own loopback did not reach the Windows listener. Native Windows Python can also run `python -m dsp_agent observe` with `PYTHONPATH` set to the checkout's `src\Agent` directory. Health status `observer_unverified` proves plugin load and transport; a `not_loaded` observation is expected at the menu. `embedded_save_name` is not a reliable loaded filename.
+Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `$game\BepInEx\plugins\DspAgentBridge\`. Start DSP through Steam with `Start-Process 'C:\Program Files (x86)\Steam\steam.exe' -ArgumentList '-applaunch 1366540'`; launching `DSPGAME.exe` directly failed Steam initialization in this environment. Check the BepInEx log for `Loading [DSP Agent Bridge 0.3.0]`. Query from **native PowerShell**: `Invoke-RestMethod http://127.0.0.1:38741/v1/health` and `Invoke-RestMethod http://127.0.0.1:38741/v1/observe`. WSL's own loopback did not reach the Windows listener. Native Windows Python can also run `python -m dsp_agent observe` with `PYTHONPATH` set to the checkout's `src\Agent` directory. Health status `stage_b_unverified` describes the conservative build label, not the later visible test. A `not_loaded` observation is expected at the menu. `embedded_save_name` is not a reliable loaded filename.
+
+## Guarded walking trial
+
+Load a designated experiment copy in the visible game. Observe its fresh `session_id` and nearby `vein_id`; verify the planet and mecha position on screen. From native PowerShell, set `$env:PYTHONPATH` to the checkout's `src\Agent` path and use Windows Python:
+
+```powershell
+$operationId = [guid]::NewGuid().ToString('N')
+& "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" -m dsp_agent move-to-vein --session-id '<observed-session-id>' --vein-id 1 --operation-id $operationId
+& "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" -m dsp_agent operation --operation-id $operationId
+& "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" -m dsp_agent observe
+```
+
+Replace the vein ID with one returned by that observation. The command queues one ordinary walking order only when the mecha is idle, walking, unpaused, and within 25 game units of the vein. `pending` or `running` is not success: poll the same operation ID, then compare fresh position and the visible mecha. `rejected` means no order was issued; `partial` reports the last observed position and reason, and requires a fresh observation before further action. Pausing the game interrupts an active bridge movement. Operation history is in memory, so a restart makes an unresolved ID unknown; do not automatically resubmit it. Restore the experiment copy for another trial. The physical loaded filename is not exposed by the verified game API and must be selected through the game UI.
 
 ## Optional Spherewright read-only probe
 

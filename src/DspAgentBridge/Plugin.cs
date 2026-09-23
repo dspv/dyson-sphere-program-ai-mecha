@@ -7,8 +7,7 @@ using BepInEx;
 
 namespace DspAgentBridge
 {
-    // Observation is read-only; positive factory entities still need live UI verification.
-    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.2.0")]
+    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.3.0")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private HttpListener listener;
@@ -18,6 +17,7 @@ namespace DspAgentBridge
         private GameData currentData;
         private bool currentReady;
         private string sessionId;
+        private readonly Movement movement = new Movement();
 
         private sealed class ObservationRequest
         {
@@ -34,7 +34,7 @@ namespace DspAgentBridge
                 listener.Start();
                 listenerThread = new Thread(ListenLoop) { IsBackground = true, Name = "DspAgentBridge.Http" };
                 listenerThread.Start();
-                Logger.LogInfo("DSP Agent Bridge read-only listener started on loopback");
+                Logger.LogInfo("DSP Agent Bridge listener started on loopback");
             }
             catch (Exception error)
             {
@@ -68,6 +68,13 @@ namespace DspAgentBridge
                 sessionId = ready ? Guid.NewGuid().ToString("N") : null;
             }
 
+            try { movement.Tick(sessionId); }
+            catch (Exception error)
+            {
+                movement.FailActive();
+                Logger.LogError("Movement update failed: " + error);
+            }
+
             ObservationRequest request = null;
             lock (observationQueue)
             {
@@ -90,7 +97,7 @@ namespace DspAgentBridge
             response.Headers.Add("Cache-Control", "no-store");
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/health")
             {
-                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.2.0\",\"status\":\"observer_unverified\"}");
+                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.3.0\",\"status\":\"stage_b_unverified\"}");
                 return;
             }
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/observe")
@@ -113,7 +120,39 @@ namespace DspAgentBridge
                 Write(response, 200, request.Json);
                 return;
             }
-            // There is intentionally no mutation route before game-version validation.
+            if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/v1/move-to-vein")
+            {
+                string operationId = context.Request.QueryString["operation_id"];
+                string requiredSession = context.Request.QueryString["session_id"];
+                string rawVein = context.Request.QueryString["vein_id"];
+                Guid parsedOperation, parsedSession;
+                int veinId;
+                if (context.Request.RawUrl.Length > 256 || context.Request.QueryString.Count != 3 ||
+                    context.Request.ContentLength64 != 0 ||
+                    !Guid.TryParseExact(operationId, "N", out parsedOperation) ||
+                    !Guid.TryParseExact(requiredSession, "N", out parsedSession) ||
+                    !int.TryParse(rawVein, out veinId) || veinId <= 0)
+                {
+                    Write(response, 400, Movement.Error("invalid_request"));
+                    return;
+                }
+                var result = movement.Enqueue(operationId, requiredSession, veinId);
+                Write(response, result.Contains("\"status\":\"error\"") ? 409 : 202, result);
+                return;
+            }
+            if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/operation")
+            {
+                string operationId = context.Request.QueryString["operation_id"];
+                Guid parsedOperation;
+                if (!Guid.TryParseExact(operationId, "N", out parsedOperation))
+                {
+                    Write(response, 400, Movement.Error("invalid_operation_id"));
+                    return;
+                }
+                var result = movement.Get(operationId);
+                Write(response, result.Contains("\"status\":\"error\"") ? 404 : 200, result);
+                return;
+            }
             Write(response, 404, "{\"protocol_version\":1,\"status\":\"error\",\"error\":\"unknown_action\"}");
         }
 

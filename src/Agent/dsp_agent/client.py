@@ -1,6 +1,7 @@
 """Strict read-only bridge client. Gameplay actions are not implemented yet."""
 
 import json
+import uuid
 from urllib import error, parse, request
 
 
@@ -8,7 +9,7 @@ class BridgeError(RuntimeError):
     pass
 
 
-def _read(base_url, path, timeout, max_bytes):
+def _request(base_url, path, timeout, max_bytes, method="GET"):
     parsed = parse.urlsplit(base_url)
     if parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "localhost", "::1"):
         raise BridgeError("bridge address must use loopback HTTP")
@@ -16,7 +17,8 @@ def _read(base_url, path, timeout, max_bytes):
         raise BridgeError("bridge address must be a plain loopback origin")
     url = base_url.rstrip("/") + path
     try:
-        with request.urlopen(request.Request(url, method="GET"), timeout=timeout) as response:
+        body = b"" if method == "POST" else None
+        with request.urlopen(request.Request(url, data=body, method=method), timeout=timeout) as response:
             data = response.read(max_bytes)
             if response.read(1):
                 raise BridgeError("oversized bridge response")
@@ -31,12 +33,47 @@ def _read(base_url, path, timeout, max_bytes):
     return payload
 
 
+def _read(base_url, path, timeout, max_bytes):
+    return _request(base_url, path, timeout, max_bytes)
+
+
+def _operation_id(value):
+    try:
+        parsed = uuid.UUID(value)
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise BridgeError("operation ID must be a UUID") from exc
+    if parsed.hex != value:
+        raise BridgeError("operation ID must use 32 lowercase hex digits")
+    return value
+
+
 def read_health(base_url="http://127.0.0.1:38741", timeout=3):
     payload = _read(base_url, "/v1/health", timeout, 4096)
-    if payload.get("status") not in ("bootstrap_only", "observer_unverified"):
+    if payload.get("status") not in ("bootstrap_only", "observer_unverified", "stage_b_unverified"):
         raise BridgeError("unexpected bridge status")
     if not isinstance(payload.get("bridge_version"), str):
         raise BridgeError("missing bridge version")
+    return payload
+
+
+def request_move_to_vein(session_id, vein_id, operation_id, base_url="http://127.0.0.1:38741", timeout=3):
+    _operation_id(operation_id)
+    _operation_id(session_id)
+    if isinstance(vein_id, bool) or not isinstance(vein_id, int) or vein_id <= 0:
+        raise BridgeError("vein ID must be a positive integer")
+    query = parse.urlencode({"operation_id": operation_id, "session_id": session_id, "vein_id": vein_id})
+    payload = _request(base_url, "/v1/move-to-vein?" + query, timeout, 8192, "POST")
+    if payload.get("operation_id") != operation_id or payload.get("status") not in ("pending", "running", "completed", "partial", "rejected"):
+        raise BridgeError("invalid movement response")
+    return payload
+
+
+def read_operation(operation_id, base_url="http://127.0.0.1:38741", timeout=3):
+    _operation_id(operation_id)
+    query = parse.urlencode({"operation_id": operation_id})
+    payload = _read(base_url, "/v1/operation?" + query, timeout, 8192)
+    if payload.get("operation_id") != operation_id or payload.get("status") not in ("pending", "running", "completed", "partial", "rejected"):
+        raise BridgeError("invalid operation response")
     return payload
 
 

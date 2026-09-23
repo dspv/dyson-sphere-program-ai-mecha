@@ -22,13 +22,14 @@ Unknowns live here until evidence or an ADR closes them. A target in the [roadma
 
 ## Open questions
 
-- **`OQ-02` — Behavior of installed game DLL action signatures:** Stage A read-only fields have copied-save UI comparisons, including positive inventory and belts. Normal movement, mining, and building signatures remain unverified. Blocks completion of stages B–C.
+- **`OQ-02` — Behavior of installed building signatures:** Stage A read-only fields and stage B walking order have copied-save UI comparisons. Mining and construction signatures remain unverified. Blocks completion of stage C.
 - **`OQ-03` — Prepared inventory and technologies for the iron experiment:** A pristine ordinary seed `33434023` save exists, but it has no starting items. Obtain needed materials through ordinary gameplay or document a separately prepared ordinary save. Blocks the iron acceptance run.
 - **`OQ-04` — Sustained output window and minimum rate:** Decided from a target set for the experiment and game measurement. Blocks final milestone judgment, not instrumentation.
 - **`OQ-05` — Model/API budget and credentials:** Decided by the owner before enabling paid planning calls. Blocks stage D, not deterministic stages.
 
 - **`OQ-07` — Production counter source:** Decided by finding a cumulative game counter for the exact iron smelter and output item, then comparing it with the visible UI across save and session changes. Blocks automated production acceptance.
 - **`OQ-09` — Reliable loaded-file identity:** `GameMain.gameName` is an embedded label and retained the pristine name after loading a renamed copy. No verified installed API reports the physical loaded filename. Stage B actions must require a fresh session and user-designated experiment context without treating the embedded name as proof of file identity.
+- **`OQ-10` — Operation identity after restart:** Stage B's movement operation cache is bounded and in memory. A restart loses it, so the local journal and fresh world observation must reconcile any unresolved action before retry. Stage C construction needs stronger duplicate prevention across restarts.
 
 ## What would falsify the plan
 

@@ -1,19 +1,27 @@
-"""Inspect local bridge transports without issuing gameplay actions."""
+"""Inspect the local bridge and issue explicit, bounded movement operations."""
 
 import argparse
 import json
 import sys
-from .client import BridgeError, read_health, read_observation
+from .client import BridgeError, read_health, read_observation, read_operation, request_move_to_vein
 from .mcp_stdio import McpError, StdioMcpClient
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="DSP bridge read-only diagnostics")
+    parser = argparse.ArgumentParser(description="DSP bridge diagnostics and bounded movement")
     commands = parser.add_subparsers(dest="command")
     health = commands.add_parser("health", help="Read the project bootstrap endpoint")
     health.add_argument("--bridge", default="http://127.0.0.1:38741")
     observe = commands.add_parser("observe", help="Read bounded game observation")
     observe.add_argument("--bridge", default="http://127.0.0.1:38741")
+    move = commands.add_parser("move-to-vein", help="Order a walking mecha to one nearby vein")
+    move.add_argument("--bridge", default="http://127.0.0.1:38741")
+    move.add_argument("--session-id", required=True)
+    move.add_argument("--vein-id", type=int, required=True)
+    move.add_argument("--operation-id", required=True, help="Stable UUID hex; reuse only to poll the same request")
+    operation = commands.add_parser("operation", help="Read a movement result without retrying it")
+    operation.add_argument("--bridge", default="http://127.0.0.1:38741")
+    operation.add_argument("--operation-id", required=True)
     spherewright = commands.add_parser("spherewright-probe", help="Inspect Spherewright MCP without game writes")
     spherewright.add_argument("--exe", required=True, help="Path to Spherewright.Mcp.exe")
     spherewright.add_argument("--log", help="Optional local stderr log path")
@@ -23,6 +31,10 @@ def main(argv=None):
             result = read_health(args.bridge if args.command else "http://127.0.0.1:38741")
         elif args.command == "observe":
             result = read_observation(args.bridge)
+        elif args.command == "move-to-vein":
+            result = request_move_to_vein(args.session_id, args.vein_id, args.operation_id, args.bridge)
+        elif args.command == "operation":
+            result = read_operation(args.operation_id, args.bridge)
         else:
             with StdioMcpClient(args.exe, log_path=args.log) as client:
                 tools = client.list_tools()

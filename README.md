@@ -4,15 +4,15 @@ A work-in-progress BepInEx bridge and local agent intended to build and verify f
 
 ## Current status
 
-The read-only bridge is compiled and loaded in the Windows DSP client. Stage A observation matched visible UI checks on copied ordinary saves, including planet, geographic position, empty and populated inventory, nearby iron reserves, and factory belts. Large factories report partial scans explicitly. No bridge gameplay action or production milestone has been verified. The local MCP client, journal, planner, and verifier have offline test coverage. See [build status](.ai/14-build-status.md).
+The bridge is compiled and loaded in the Windows DSP client. Stage A observation matched visible UI checks on copied ordinary saves. Stage B issued a guarded walking order through the game's normal order API; the mecha visibly moved to an iron vein, while invalid requests and a paused partial move were reported accurately. Mining, construction, and production are not yet verified. The local MCP client, journal, planner, and verifier have offline test coverage. See [build status](.ai/14-build-status.md).
 
 | Track             | Progress |
 | ----------------- | -------- |
 | Documentation     | 50%      |
-| Protocol          | 20%      |
+| Protocol          | 50%      |
 | Bridge            | 50%      |
 | Agent             | 0%       |
-| Game verification | 20%      |
+| Game verification | 50%      |
 
 ## Start here
 

@@ -81,3 +81,13 @@ Loading a byte-identical save copy under a different filename kept `GameMain.gam
 **Rules out:** A filename guard based only on `GameMain.gameName` and reporting an unverified physical save path.
 
 **Revisit if:** A local game API or trustworthy load event exposes the actual loaded path and is verified against the game UI or file system.
+
+## ADR-009 — Use a walking order for the first game action
+
+**Date:** 2026-09-24. **Source:** installed API inspection and copied-save trial. **Status:** accepted.
+
+`Player.Order(OrderNode.MoveTo(vein.pos), false)` follows the game's normal walking and order-completion path. The bridge resolves a local vein ID on the game thread, requires the observed session, limits distance to 25 units, refuses a busy or paused player, and exposes a stable operation ID for polling. A live trial moved the mecha from the landing capsule to an iron cluster and matched the visible position. Pausing during a second trial yielded a partial result and stopped the order. This is the stage B action; it does not establish mining or construction capability.
+
+**Rules out:** Teleportation, setting player position directly, and interpreting HTTP acceptance as completed movement.
+
+**Revisit if:** The installed game's order semantics change, a normal walking order fails to stop on pause, or a future action API needs a stronger persistent operation model.

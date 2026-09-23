@@ -1,25 +1,25 @@
 # Build Status
 
-**Last updated: 2026-09-24. Phase: stage B research. Next: implement and visibly test one bounded movement order on the new game's experiment copy.** The [verification policy](10-verification.md) defines what each status means.
+**Last updated: 2026-09-24. Phase: stage C research. Next: inspect normal mining and construction APIs, prepare ordinary materials on a copied save, then build one connected iron segment.** The [verification policy](10-verification.md) defines what each status means.
 
 ## Progress by track
 
 These are coarse implementation indicators, not gameplay success rates. The same values appear in [README.md](../README.md).
 
-| Track             | Progress | State                       |
-| ----------------- | -------- | --------------------------- |
-| Documentation     | 50%      | Corpus and handoff drafted  |
-| Protocol          | 20%      | Offline clients under test  |
-| Bridge            | 50%      | Live read-only observer     |
-| Agent             | 0%       | No model-driven gameplay    |
-| Game verification | 20%      | Stage A UI comparisons pass |
+| Track             | Progress | State                      |
+| ----------------- | -------- | -------------------------- |
+| Documentation     | 50%      | Corpus and handoff drafted |
+| Protocol          | 50%      | Live operation polling     |
+| Bridge            | 50%      | Observer and walking order |
+| Agent             | 0%       | No model-driven gameplay   |
+| Game verification | 50%      | Stages A and B visible     |
 
 ## Milestones
 
 | Stage             | Status      |
 | ----------------- | ----------- |
 | A observer        | verified    |
-| B one action      | not started |
+| B one action      | verified    |
 | C iron line       | not started |
 | D model control   | not started |
 | E–K later roadmap | not started |
@@ -29,10 +29,14 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - The repository was a documentation template before this work. The source specification is archived in `docs/source-spec.txt`.
 - WSL ext4 hosts the only checkout; native PowerShell builds it through `\\wsl.localhost\Ubuntu\home\ds\dev\dyson-sphere-program-ai-mecha`. The installed game is Mono DSP `0.10.35.29057` by its version record, with BepInEx `5.4.23.5` and user-local Windows .NET SDK `8.0.425`. [Research](../docs/RESEARCH.md) owns exact paths and evidence.
 - Released Spherewright 0.3.3 pins an older DSP build and was not installed. The project bridge is the integration path for this installation (ADR-007).
-- The `net472` bridge loaded through BepInEx and answered health and observer calls from native PowerShell and Windows Python. At the Steam-launched menu, `/v1/observe` returned `not_loaded`; in a copied ordinary save it returned Ancha II, the same latitude/longitude shown in the UI, an empty inventory matching the open panel, and six iron veins totaling 57,655 reserves, matching the hovered cluster. A second copied ordinary save showed positive inventory and factory belts matching the visible factory. The mature save exceeded the scan and result caps, and the response marked both limits. Stage A's returned fields have live UI comparisons; no gameplay action or production milestone is verified.
-- The local HTTP and MCP clients, command journal, offline planner, production verifier, and model proposal adapter remain offline-tested. No game action, production run, or live paid model call has occurred.
+- The `net472` bridge loaded through BepInEx and answered health and observer calls from native PowerShell and Windows Python. At the Steam-launched menu, `/v1/observe` returned `not_loaded`; in a copied ordinary save it returned Ancha II, the same latitude/longitude shown in the UI, an empty inventory matching the open panel, and six iron veins totaling 57,655 reserves, matching the hovered cluster. A second copied ordinary save showed positive inventory and factory belts matching the visible factory. The mature save exceeded the scan and result caps, and the response marked both limits. Stage A's returned fields have live UI comparisons.
+- The first project-owned action, a bounded walking order to a nearby vein, visibly moved the mecha on the new game's experiment copy. Invalid vein and stale-session requests were rejected; replaying the same operation ID returned its prior result. Pausing a second move returned a partial result and stopped the order. This verifies stage B only. The MCP client, journal, offline planner, production verifier, and model proposal adapter remain offline-tested; no production run or live paid model call has occurred.
 
 ## Log
+
+### 2026-09-24 — Stage B walking action verified in the visible game
+
+Built bridge `0.3.0` against the installed game and BepInEx DLLs with zero warnings/errors and loaded it through Steam. On the byte-identical seed `33434023` experiment copy, a command to vein ID 1 used `Player.Order(OrderNode.MoveTo(...), false)` and completed from tick `14930` to `15146`. The response moved from `(181.77948, -5.71299, 87.05093)` to `(173.272583, 1.52417254, 103.055573)` near the target `(172.380371, 1.71512282, 103.146187)`. The visible mecha stood beside the iron cluster; the geographic UI changed from `1°37′ S, 115°35′ E` to `0°29′ N, 120°51′ E`, matching fresh observation. Invalid vein ID `999999` returned `rejected/invalid_vein`; a wrong session returned `rejected/session_mismatch`. Repeating the completed operation ID returned its original result without a new order. After reloading the copy, a second move was paused after nine game ticks: it returned `partial/paused` with a changed position, and the mecha remained stopped after resuming. `make check` passed 23 offline tests, but those tests alone would not establish this gameplay result. No save or factory pool was edited directly.
 
 ### 2026-09-24 — Live observer comparison on a copied ordinary save
 
