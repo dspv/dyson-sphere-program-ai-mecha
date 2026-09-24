@@ -37,8 +37,13 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - An offline reward evaluator ranks verified white-matrix throughput above bounded intermediate progress points and elapsed game time. A local SQLite memory promotes a strategy version only after paired, non-regressing checkpoint trials. The adapter scored one private, visibly checked UI-built iron-line episode: two positive entity windows earned two bounded progress points and zero white throughput. No paired comparison, promotion, or changed in-game decision has occurred; the [policy](../docs/REWARD-LEARNING.md) details the boundary.
 - The user redirected the project toward an agent that chooses feasible goals and learns reusable skills from checked game feedback. The UI-built line is a measurement baseline, not the agent's intended policy. No autonomous goal-selection episode has run; the [research comparison and experiment](../docs/AI-NATIVE-RESEARCH.md) record the proposed direction.
 - The AI-native contract now separates revisable strategy, near-term goals, and tactical experiments; it records predictions, outcomes, proposed causes, and applicability limits for future retrieval. This is documentation of intended behavior. No game-controlling experiment runner or demonstrated skill transfer exists yet.
+- An offline SQLite experiment ledger now persists chosen strategic and near-term goals, action predictions and falsifiers, before/after references, external verdicts, and proposed explanations. It blocks identical failed retries in the same state and unresolved attempts, and retrieves checked outcomes by exact near-term goal. The ledger has no model or game connection; caller-supplied evidence references are not self-validating.
 
 ## Log
+
+### 2026-09-24 — First offline self-directed experiment ledger
+
+Added the persistent goal and experiment record that a future model-directed runner can use. Four offline tests cover restart and retrieval, immutable checked verdicts, unresolved-action reconciliation, repeated-failure blocking, and refusal to store an unevidenced success as checked memory. No DSP action or live model call was made in this slice; self-directed play and learning remain unverified.
 
 ### 2026-09-24 — AI-native research and updated game-version retest
 

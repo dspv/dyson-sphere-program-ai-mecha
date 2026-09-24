@@ -16,7 +16,7 @@ Supporting documents: [research](../docs/RESEARCH.md) owns game API findings; [A
 
 ## Current state
 
-**Last updated: 2026-09-24. Phase: stage C partial implementation and AI-native research pivot.** The project bridge builds against the local Mono game and BepInEx DLLs and has visibly verified stages A and B on copied ordinary saves. On a copy of a new ordinary game, an ordinary UI-built miner, belt, powered sorter, and smelter produced iron ingots over two measured game-time windows; the exact entity counter and visible panel agreed. Bridge-directed construction and self-directed gameplay remain unverified. One private episode was scored, but there are no paired strategy trials or demonstrated learning. The [AI-native research](../docs/AI-NATIVE-RESEARCH.md) defines the new experimental direction; the exact evidence is in [14-build-status.md](14-build-status.md).
+**Last updated: 2026-09-24. Phase: stage C partial implementation and AI-native experiment groundwork.** The project bridge builds against the local Mono game and BepInEx DLLs and has visibly verified stages A and B on copied ordinary saves. On a copy of a new ordinary game, an ordinary UI-built miner, belt, powered sorter, and smelter produced iron ingots over two measured game-time windows; the exact entity counter and visible panel agreed. Bridge-directed construction and self-directed gameplay remain unverified. One private episode was scored, and an offline goal and experiment ledger is implemented, but there are no paired strategy trials or demonstrated learning. The [AI-native research](../docs/AI-NATIVE-RESEARCH.md) defines the experimental direction; the exact evidence is in [14-build-status.md](14-build-status.md).
 
 ## Rules of engagement
 
