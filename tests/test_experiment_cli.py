@@ -33,7 +33,8 @@ class ExperimentCliTests(unittest.TestCase):
                 for extra in ([], ["--allow-game-write"]):
                     code = main(["experiment-once", "--data-dir", directory, *extra])
                     self.assertEqual(code, 0)
-        self.assertEqual(allowed_sets, [{"inspect"}, {"inspect", "move", "mine"}])
+        self.assertEqual(allowed_sets, [{"inspect", "inspect_entity"},
+                                        {"inspect", "inspect_entity", "move", "mine"}])
 
 
 if __name__ == "__main__":

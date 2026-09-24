@@ -103,15 +103,27 @@ class ExperimentRunner:
         if not isinstance(before, Observation):
             raise RunnerError("observer did not return an Observation")
         before.validate()
-        goal = self.choose_goal(before)
+        game_version = before.facts.get("game_version")
+        recent = self.ledger.recent_checked(before.session_id, game_version=game_version)
+        recent_summary = [{"near_term_goal": item["near_term_goal"],
+                           "action": item["action"], "verdict": item["verdict"],
+                           "explanation": item["explanation"],
+                           "evidence_ref": item["evidence_ref"]} for item in recent]
+        decision_observation = Observation(
+            before.session_id, before.game_tick, before.evidence_ref,
+            before.state_fingerprint,
+            {**before.facts, "recent_checked_attempts": recent_summary},
+        )
+        goal = self.choose_goal(decision_observation)
         if not isinstance(goal, GoalChoice):
             raise RunnerError("model did not return a GoalChoice")
         goal.validate()
-        game_version = before.facts.get("game_version")
         context = context_from_facts(before.facts)
         memories = self.ledger.memories(goal.near_term_goal, game_version=game_version,
                                         context=context)
-        planned = self.plan(before, goal, memories)
+        seen = {item["attempt_id"] for item in memories}
+        memories.extend(item for item in recent if item["attempt_id"] not in seen)
+        planned = self.plan(decision_observation, goal, memories[:32])
         if not isinstance(planned, ExperimentPlan):
             raise RunnerError("model did not return an ExperimentPlan")
         planned.validate(self.allowed_actions)

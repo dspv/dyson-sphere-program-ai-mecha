@@ -8,7 +8,7 @@ from .experiment_runner import ExperimentPlan, GoalChoice, RunnerError
 from .model_planner import ModelPlannerError, call_structured_function
 
 
-ACTION_KINDS = frozenset({"inspect", "move", "mine"})
+ACTION_KINDS = frozenset({"inspect", "inspect_entity", "move", "mine"})
 
 
 class ResponsesExperimentModel:
@@ -33,10 +33,14 @@ class ResponsesExperimentModel:
         observation.validate()
         arguments = self._call(
             {"session_id": observation.session_id, "game_tick": observation.game_tick,
-             "facts": observation.facts},
+             "facts": observation.facts, "allowed_actions": sorted(self.allowed_actions)},
             "choose_goal",
             "Choose a feasible strategic direction and one near-term goal from observed facts. "
             "You may change goals as evidence changes. Unknown facts remain unknown. "
+            "Recent checked attempts are history, not current game observations; use them "
+            "to avoid repeated checks that produced no new information. "
+            "Choose a near-term goal that the listed actions can advance now. "
+            "Construction placement and recipe changes are unavailable in this runner. "
             "Do not claim a game action or capability has succeeded.",
             "Propose the next self-chosen goal and explain its observed feasibility.",
             {"strategic_goal": {"type": "string"},
@@ -74,7 +78,14 @@ class ResponsesExperimentModel:
             "Recheck the observed context before applying any past action. "
             "Predict an observable result and state what would falsify it. "
             "A proposal is not evidence of success. "
+            "A generic inspect only refreshes the same summary; use inspect_entity for a "
+            "specific observed nearby entity. The exact entity read reports proto, recipe, "
+            "cycle count, and buffers for assemblers, but not power or connection status. "
+            "Use past checked attempts across goal wordings to avoid repeating an unchanged "
+            "read-only check. Their achieved verdict establishes only the primitive read. "
             "For inspect, set target_id, count, and item_id to null. "
+            "For inspect_entity, set target_id to an observed nearby entity ID and count "
+            "and item_id to null. "
             "For move, set target_id to the observed vein ID and count and item_id to null. "
             "For mine, set target_id to the observed vein ID, count from 1 to 5, "
             "and item_id to 1001 for iron or 1002 for copper.",
@@ -93,6 +104,11 @@ class ResponsesExperimentModel:
             if any(value is not None for value in (target_id, count, item_id)):
                 raise ModelPlannerError("inspection proposal has action parameters")
             args = {}
+        elif kind == "inspect_entity":
+            if (isinstance(target_id, bool) or not isinstance(target_id, int) or target_id <= 0
+                    or count is not None or item_id is not None):
+                raise ModelPlannerError("invalid entity inspection proposal")
+            args = {"entity_id": target_id}
         elif kind == "move":
             if (isinstance(target_id, bool) or not isinstance(target_id, int) or target_id <= 0
                     or count is not None or item_id is not None):

@@ -19,7 +19,8 @@ def observation(tick=100, *, session=SESSION):
             "planet": {"id": 102, "name": "Ancha II"},
             "mecha_position": {"x": 1.0, "y": 2.0, "z": 3.0},
             "inventory": {"complete": True, "items": []},
-            "nearby_veins": {"veins": [{"id": 7, "product_id": 1001, "amount": 100}]}}
+            "nearby_veins": {"veins": [{"id": 7, "product_id": 1001, "amount": 100}]},
+            "nearby_entities": {"entities": [{"id": 19, "proto_id": 2302}]}}
 
 
 def operation(operation_id, status="pending", *, session=SESSION):
@@ -28,6 +29,30 @@ def operation(operation_id, status="pending", *, session=SESSION):
 
 
 class BridgeExperimentTests(unittest.TestCase):
+    def test_exact_entity_inspection_keeps_targeted_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            reads = []
+
+            def entity_client(entity_id, base):
+                reads.append(entity_id)
+                return {"status": "ok", "session_id": SESSION, "planet_id": 102,
+                        "game_tick": 101, "entity_id": entity_id,
+                        "entity": {"proto_id": 2302,
+                                   "assembler": {"recipe_id": 0, "cycle_count": 0}}}
+
+            adapter = BridgeExperimentAdapter(directory, observe_client=lambda base: observation(),
+                                              entity_client=entity_client)
+            before = adapter.observe()
+            with self.assertRaisesRegex(BridgeExperimentError, "bounded observation"):
+                adapter.execute({"kind": "inspect_entity", "args": {"entity_id": 999}},
+                                before, "unused")
+            self.assertEqual(reads, [])
+            result = adapter.execute({"kind": "inspect_entity", "args": {"entity_id": 19}},
+                                     before, "operation-entity")
+            self.assertEqual(reads, [19])
+            self.assertEqual(json.loads(Path(result["evidence_ref"]).read_text())["entity_id"], 19)
+            self.assertEqual(result["entity"]["assembler"]["recipe_id"], 0)
+
     def test_mining_polls_one_operation_and_keeps_private_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
             submissions = []

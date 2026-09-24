@@ -12,7 +12,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from .client import (read_observation, read_operation, request_mine_vein,
+from .client import (read_entity, read_observation, read_operation, request_mine_vein,
                      request_move_to_vein)
 from .bridge_verifier import verify_bridge_action
 from .experiment_runner import ExperimentRunner, Observation
@@ -26,7 +26,8 @@ class BridgeExperimentAdapter:
     def __init__(self, evidence_dir, *, base_url="http://127.0.0.1:38741",
                  max_polls=40, poll_interval=0.25, sleep=time.sleep,
                  observe_client=read_observation, operation_client=read_operation,
-                 move_client=request_move_to_vein, mine_client=request_mine_vein):
+                 move_client=request_move_to_vein, mine_client=request_mine_vein,
+                 entity_client=read_entity):
         if (isinstance(max_polls, bool) or not isinstance(max_polls, int)
                 or not 1 <= max_polls <= 120):
             raise ValueError("max_polls must be between 1 and 120")
@@ -42,6 +43,22 @@ class BridgeExperimentAdapter:
         self.operation_client = operation_client
         self.move_client = move_client
         self.mine_client = mine_client
+        self.entity_client = entity_client
+
+    def _store(self, payload, stem):
+        raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+        digest = hashlib.sha256(raw).hexdigest()
+        self.evidence_dir.mkdir(parents=True, exist_ok=True)
+        destination = self.evidence_dir / (stem + "-" + digest[:16] + ".json")
+        if not destination.exists():
+            with tempfile.NamedTemporaryFile(dir=self.evidence_dir, prefix=".snapshot-", delete=False) as temporary:
+                temporary.write(raw)
+                temporary_path = Path(temporary.name)
+            try:
+                os.replace(temporary_path, destination)
+            finally:
+                temporary_path.unlink(missing_ok=True)
+        return str(destination.resolve())
 
     def observe(self):
         payload = self.observe_client(self.base_url)
@@ -56,18 +73,7 @@ class BridgeExperimentAdapter:
                 or not isinstance(planet, dict) or isinstance(planet.get("id"), bool)
                 or not isinstance(planet.get("id"), int) or planet["id"] <= 0):
             raise BridgeExperimentError("loaded observation has incomplete identity")
-        raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
-        digest = hashlib.sha256(raw).hexdigest()
-        self.evidence_dir.mkdir(parents=True, exist_ok=True)
-        destination = self.evidence_dir / (session_id + "-" + str(tick) + "-" + digest[:16] + ".json")
-        if not destination.exists():
-            with tempfile.NamedTemporaryFile(dir=self.evidence_dir, prefix=".snapshot-", delete=False) as temporary:
-                temporary.write(raw)
-                temporary_path = Path(temporary.name)
-            try:
-                os.replace(temporary_path, destination)
-            finally:
-                temporary_path.unlink(missing_ok=True)
+        evidence_ref = self._store(payload, session_id + "-" + str(tick))
         facts = {name: payload.get(name) for name in (
             "game_version", "paused", "planet", "mecha_position", "inventory",
             "inhand_item", "nearby_veins", "nearby_entities", "recent_entities",
@@ -77,7 +83,7 @@ class BridgeExperimentAdapter:
             "inhand_item", "nearby_veins")}
         fingerprint = hashlib.sha256(json.dumps(
             state, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")).hexdigest()
-        return Observation(session_id, tick, str(destination.resolve()), fingerprint, facts)
+        return Observation(session_id, tick, evidence_ref, fingerprint, facts)
 
     def execute(self, action, before, operation_id):
         if not isinstance(before, Observation):
@@ -92,6 +98,33 @@ class BridgeExperimentAdapter:
                 raise BridgeExperimentError("inspection takes no arguments")
             return {"operation_id": operation_id, "status": "completed", "action": "inspect",
                     "session_id": before.session_id}
+        if kind == "inspect_entity":
+            if set(args) != {"entity_id"}:
+                raise BridgeExperimentError("entity inspection requires one entity ID")
+            entity_id = args["entity_id"]
+            if isinstance(entity_id, bool) or not isinstance(entity_id, int) or entity_id <= 0:
+                raise BridgeExperimentError("invalid entity ID")
+            nearby = before.facts.get("nearby_entities")
+            entities = nearby.get("entities") if isinstance(nearby, dict) else None
+            if (not isinstance(entities, list) or not any(
+                    isinstance(entry, dict) and entry.get("id") == entity_id for entry in entities)):
+                raise BridgeExperimentError("entity was not in the bounded observation")
+            detail = self.entity_client(entity_id, self.base_url)
+            if (not isinstance(detail, dict) or detail.get("status") != "ok"
+                    or detail.get("session_id") != before.session_id
+                    or detail.get("planet_id") != before.facts["planet"]["id"]
+                    or detail.get("entity_id") != entity_id
+                    or isinstance(detail.get("game_tick"), bool)
+                    or not isinstance(detail.get("game_tick"), int)
+                    or detail["game_tick"] < before.game_tick
+                    or not isinstance(detail.get("entity"), dict)):
+                raise BridgeExperimentError("exact entity read changed identity")
+            evidence_ref = self._store(detail, before.session_id + "-entity-" +
+                                       str(entity_id) + "-" + str(detail["game_tick"]))
+            return {"operation_id": operation_id, "status": "completed",
+                    "action": "inspect_entity", "session_id": before.session_id,
+                    "entity_id": entity_id, "entity": detail["entity"],
+                    "evidence_ref": evidence_ref}
         fresh = self.observe()
         if (fresh.session_id != before.session_id
                 or fresh.state_fingerprint != before.state_fingerprint):
@@ -152,7 +185,7 @@ def make_bridge_runner(ledger, model, adapter, *, max_game_ticks=1800):
     if not isinstance(adapter, BridgeExperimentAdapter):
         raise TypeError("bridge experiment adapter is required")
     allowed = model.allowed_actions
-    if not allowed <= {"inspect", "move", "mine"}:
+    if not allowed <= {"inspect", "inspect_entity", "move", "mine"}:
         raise ValueError("model contains an unsupported bridge action")
     return ExperimentRunner(
         ledger, adapter.observe, model.choose_goal, model.plan, adapter.execute,

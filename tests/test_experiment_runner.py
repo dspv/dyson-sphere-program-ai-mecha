@@ -19,10 +19,10 @@ class ExperimentRunnerTests(unittest.TestCase):
             with ExperimentLedger(Path(directory) / "experiments.sqlite") as ledger:
                 observations = iter((observation(10), observation(20), observation(30), observation(40)))
                 seen_memories = []
+                seen_history = []
                 actions = []
 
                 def plan(before, goal, memories):
-                    self.assertEqual(goal.near_term_goal, "get iron")
                     seen_memories.append(memories)
                     hypothesis = "walking is enough" if not memories else "mining is required"
                     kind = "move" if not memories else "mine"
@@ -38,9 +38,14 @@ class ExperimentRunnerTests(unittest.TestCase):
                         return Verification("failed", "walking moved mecha but gave no ore", "ui-no-ore")
                     return Verification("achieved", "ore appeared in the visible inventory", "ui-two-ore")
 
+                def choose_goal(before):
+                    seen_history.append(before.facts["recent_checked_attempts"])
+                    near_term = "get iron" if not seen_history[-1] else "extract ore"
+                    return GoalChoice("build an iron line", near_term, "ore is a prerequisite")
+
                 runner = ExperimentRunner(
                     ledger, lambda: next(observations),
-                    lambda before: GoalChoice("build an iron line", "get iron", "ore is a prerequisite"),
+                    choose_goal,
                     plan, execute, verify, {"move", "mine"},
                 )
                 first = runner.run_once()
@@ -50,6 +55,9 @@ class ExperimentRunnerTests(unittest.TestCase):
                 self.assertEqual(seen_memories[0], [])
                 self.assertEqual(seen_memories[1][0]["explanation"],
                                  "walking moved mecha but gave no ore")
+                self.assertEqual(seen_history[0], [])
+                self.assertEqual(seen_history[1][0]["verdict"], "failed")
+                self.assertEqual(seen_memories[1][0]["near_term_goal"], "get iron")
 
     def test_unlisted_action_never_reaches_executor(self):
         with tempfile.TemporaryDirectory() as directory:

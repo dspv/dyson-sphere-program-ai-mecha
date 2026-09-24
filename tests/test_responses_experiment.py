@@ -71,6 +71,19 @@ class ResponsesExperimentTests(unittest.TestCase):
             model.plan(Observation("session-a", 10, "obs-10", "state-a", {}),
                        GoalChoice("progress", "ore", "needed"), [])
 
+    def test_exact_entity_inspection_maps_observed_id(self):
+        model = ResponsesExperimentModel(
+            "configured-model", {"inspect_entity"}, api_key="fake-key",
+            opener=lambda *_args, **_kwargs: response(
+                "plan_experiment", {"kind": "inspect_entity", "target_id": 19,
+                                    "count": None, "item_id": None,
+                                    "hypothesis": "recipe may be unset",
+                                    "prediction": "recipe ID zero", "falsifier": "recipe ID positive"}),
+        )
+        plan = model.plan(Observation("session-a", 10, "obs-10", "state-a", {}),
+                          GoalChoice("progress", "inspect smelter", "need state"), [])
+        self.assertEqual(plan.action, {"kind": "inspect_entity", "args": {"entity_id": 19}})
+
 
 if __name__ == "__main__":
     unittest.main()

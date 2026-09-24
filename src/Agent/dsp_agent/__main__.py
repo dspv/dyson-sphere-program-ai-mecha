@@ -90,7 +90,8 @@ def main(argv=None):
         elif args.command == "operation":
             result = read_operation(args.operation_id, args.bridge)
         elif args.command == "experiment-once":
-            allowed = {"inspect", "move", "mine"} if args.allow_game_write else {"inspect"}
+            allowed = ({"inspect", "inspect_entity", "move", "mine"} if args.allow_game_write
+                       else {"inspect", "inspect_entity"})
             data_dir = Path(args.data_dir).resolve()
             if args.provider == "responses":
                 if not args.model:

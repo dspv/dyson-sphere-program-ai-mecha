@@ -255,3 +255,23 @@ class ExperimentLedger:
             ranked.append((similarity, -recency, memory))
         ranked.sort(key=lambda candidate: (candidate[0], candidate[1]), reverse=True)
         return [candidate[2] for candidate in ranked[:limit]]
+
+    def recent_checked(self, session_id, limit=8, *, game_version=None):
+        """Give goal selection bounded checked history from this exact game session."""
+        _required(session_id, "session ID")
+        if game_version is not None:
+            _required(game_version, "game version")
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 32:
+            raise ExperimentError("memory limit must be between 1 and 32")
+        query = (
+            "SELECT a.attempt_id FROM attempts a JOIN goals g ON a.goal_id = g.goal_id "
+            "WHERE g.session_id = ? AND a.verdict IN ('achieved', 'failed') "
+            "AND a.evidence_ref IS NOT NULL"
+        )
+        parameters = [session_id]
+        if game_version is not None:
+            query += " AND g.game_version = ?"
+            parameters.append(game_version)
+        query += " ORDER BY a.rowid DESC LIMIT ?"
+        parameters.append(limit)
+        return [self.attempt(row[0]) for row in self.connection.execute(query, parameters)]

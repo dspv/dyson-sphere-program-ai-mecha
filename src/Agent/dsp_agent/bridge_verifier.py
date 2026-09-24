@@ -63,6 +63,26 @@ def verify_bridge_action(before, after, planned, result):
     if kind == "inspect":
         return Verification("achieved", "fresh read-only bridge observation was recorded",
                             after.evidence_ref)
+    if kind == "inspect_entity":
+        entity = result.get("entity")
+        entity_id = planned.action["args"].get("entity_id")
+        evidence_ref = result.get("evidence_ref")
+        if (result.get("action") != "inspect_entity" or result.get("session_id") != after.session_id
+                or result.get("entity_id") != entity_id or not isinstance(entity, dict)
+                or not isinstance(evidence_ref, str) or not evidence_ref):
+            return Verification("unknown", "exact entity evidence is incomplete")
+        proto_id = entity.get("proto_id")
+        if isinstance(proto_id, bool) or not isinstance(proto_id, int) or proto_id <= 0:
+            return Verification("unknown", "exact entity prototype is incomplete")
+        assembler = entity.get("assembler")
+        if isinstance(assembler, dict):
+            recipe = assembler.get("recipe_id")
+            cycles = assembler.get("cycle_count")
+            details = f"; recipe_id={recipe}, cycle_count={cycles}"
+        else:
+            details = "; assembler detail unavailable"
+        return Verification("achieved", f"exact entity {entity_id} proto_id={proto_id} read recorded" + details,
+                            evidence_ref)
     if result.get("session_id") != after.session_id or result.get("planet_id") != after.facts.get("planet", {}).get("id"):
         return Verification("unknown", "operation identity and fresh planet do not match")
     if kind == "move":
