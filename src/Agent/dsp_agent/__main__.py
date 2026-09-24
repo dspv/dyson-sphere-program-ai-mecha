@@ -3,8 +3,14 @@
 import argparse
 import json
 import sys
+from pathlib import Path
+from .bridge_experiment import BridgeExperimentAdapter, BridgeExperimentError, make_bridge_runner
 from .client import BridgeError, read_build_preview, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
+from .experiment_runner import RunnerError
+from .experiments import ExperimentError, ExperimentLedger
 from .mcp_stdio import McpError, StdioMcpClient
+from .model_planner import ModelPlannerError
+from .responses_experiment import ResponsesExperimentModel
 
 
 def main(argv=None):
@@ -34,6 +40,12 @@ def main(argv=None):
     operation = commands.add_parser("operation", help="Read a movement result without retrying it")
     operation.add_argument("--bridge", default="http://127.0.0.1:38741")
     operation.add_argument("--operation-id", required=True)
+    experiment = commands.add_parser("experiment-once", help="Ask a model for one goal and one checked experiment")
+    experiment.add_argument("--bridge", default="http://127.0.0.1:38741")
+    experiment.add_argument("--model", required=True)
+    experiment.add_argument("--data-dir", required=True, help="Private local directory for the ledger and raw observations")
+    experiment.add_argument("--allow-game-write", action="store_true",
+                            help="Allow one guarded walking or mining order; default is read-only inspection")
     spherewright = commands.add_parser("spherewright-probe", help="Inspect Spherewright MCP without game writes")
     spherewright.add_argument("--exe", required=True, help="Path to Spherewright.Mcp.exe")
     spherewright.add_argument("--log", help="Optional local stderr log path")
@@ -54,6 +66,14 @@ def main(argv=None):
                                        args.bridge, item_id=args.item_id)
         elif args.command == "operation":
             result = read_operation(args.operation_id, args.bridge)
+        elif args.command == "experiment-once":
+            allowed = {"inspect", "move", "mine"} if args.allow_game_write else {"inspect"}
+            data_dir = Path(args.data_dir).resolve()
+            model = ResponsesExperimentModel(args.model, allowed)
+            ledger = ExperimentLedger(data_dir / "ledger.sqlite3")
+            adapter = BridgeExperimentAdapter(data_dir / "observations", base_url=args.bridge,
+                                              max_polls=120, poll_interval=0.5)
+            result = make_bridge_runner(ledger, model, adapter).run_once()
         else:
             with StdioMcpClient(args.exe, log_path=args.log) as client:
                 tools = client.list_tools()
@@ -76,7 +96,8 @@ def main(argv=None):
                     "bridge": {key: bridge.get(key) for key in ("bridgeConnected", "pluginVersion", "gameVersion", "gameLoaded", "writeHealth")},
                     "game": {key: game.get(key) for key in ("gameLoaded", "ownedBySpherewright", "accessRestricted", "gameVersion", "peacefulMode", "sandboxMode", "localPlanetId", "writesAllowed")},
                 }
-    except (BridgeError, McpError, OSError) as exc:
+    except (BridgeError, BridgeExperimentError, ExperimentError, RunnerError,
+            ModelPlannerError, McpError, OSError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
     print(json.dumps(result, indent=2, sort_keys=True))
