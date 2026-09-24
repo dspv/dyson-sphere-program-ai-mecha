@@ -33,6 +33,7 @@ Unknowns live here until evidence or an ADR closes them. A target in the [roadma
 - **`OQ-11` — Paired live strategy learning:** One private UI-built iron-line episode was scored from exact entity windows, and its two progress points did not promote a strategy. Baseline and changed strategies have not been run on matched checkpoint copies. Complete the configured paired trials, inspect score components and regressions, and test policy gaming before enabling promotion.
 
 - **`OQ-12` — AI-native action and transfer test:** A model has not chosen or executed a gameplay goal in DSP. The bridge has no ordinary construction command. Test a bounded construction surface, then compare model-chosen experiments with and without retrieved skills on matched copies and another seed. The design is in [AI-native research](../docs/AI-NATIVE-RESEARCH.md).
+- **`OQ-13` — Exact build and skill applicability:** The bridge reports `GameConfig.gameVersion=0.10.35` for both installed patch builds and no reliable full build number. The current memory filter therefore cannot distinguish those patches. Capture an externally verified build identity and test context-aware skill retrieval on matched copies before trusting cross-session reuse.
 
 ## What would falsify the plan
 

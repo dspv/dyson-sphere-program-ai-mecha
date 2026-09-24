@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "Agent"))
-from dsp_agent.experiments import ExperimentError, ExperimentLedger
+from dsp_agent.experiments import ExperimentError, ExperimentLedger, context_from_facts
 
 
 class ExperimentLedgerTests(unittest.TestCase):
@@ -94,6 +94,27 @@ class ExperimentLedgerTests(unittest.TestCase):
                 goal = ledger.choose_goal("session-a", "progress", "iron", "needed", "obs-1",
                                           game_version="build-a")
                 self.assertIsNotNone(goal)
+
+    def test_retrieval_ranks_matching_resources_over_newer_unrelated_memory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with ExperimentLedger(Path(directory) / "experiments.sqlite") as ledger:
+                goal = ledger.choose_goal("session-a", "progress", "get ore", "need ore", "obs-1",
+                                          game_version="build-a")
+                contexts = (
+                    context_from_facts({"planet": {"id": 102},
+                                        "nearby_veins": {"veins": [{"product_id": 1001}]}}),
+                    context_from_facts({"planet": {"id": 103},
+                                        "nearby_veins": {"veins": [{"product_id": 1002}]}}),
+                )
+                for index, context in enumerate(contexts):
+                    attempt = ledger.start_attempt("session-a", goal, "operation-" + str(index),
+                                                   "state-" + str(index), {"kind": "mine"},
+                                                   "ore nearby", "ore gained", "no ore", "obs-1",
+                                                   context=context)
+                    ledger.record_verdict(attempt, "achieved", "obs-2", "ore gained", "ui-2")
+                memories = ledger.memories("get ore", game_version="build-a", context=contexts[0])
+                self.assertEqual(memories[0]["operation_id"], "operation-0")
+                self.assertGreater(memories[0]["context_similarity"], memories[1]["context_similarity"])
 
 
 if __name__ == "__main__":

@@ -8,6 +8,8 @@ the model's own explanation or from an action response alone.
 import uuid
 from dataclasses import dataclass
 
+from .experiments import context_from_facts
+
 
 class RunnerError(RuntimeError):
     pass
@@ -106,7 +108,9 @@ class ExperimentRunner:
             raise RunnerError("model did not return a GoalChoice")
         goal.validate()
         game_version = before.facts.get("game_version")
-        memories = self.ledger.memories(goal.near_term_goal, game_version=game_version)
+        context = context_from_facts(before.facts)
+        memories = self.ledger.memories(goal.near_term_goal, game_version=game_version,
+                                        context=context)
         planned = self.plan(before, goal, memories)
         if not isinstance(planned, ExperimentPlan):
             raise RunnerError("model did not return an ExperimentPlan")
@@ -118,7 +122,7 @@ class ExperimentRunner:
         attempt_id = self.ledger.start_attempt(
             before.session_id, goal_id, operation_id, before.state_fingerprint,
             planned.action, planned.hypothesis, planned.prediction,
-            planned.falsifier, before.evidence_ref,
+            planned.falsifier, before.evidence_ref, context=context,
         )
         try:
             action_result = self.execute(planned.action, before, operation_id)

@@ -57,7 +57,9 @@ class ResponsesExperimentModel:
             raise ModelPlannerError("invalid memory context")
         lessons = [{"primitive_action_outcome": memory["verdict"], "action": memory["action"],
                     "hypothesis": memory["hypothesis"], "explanation": memory["explanation"],
-                    "evidence_ref": memory["evidence_ref"]} for memory in memories]
+                    "evidence_ref": memory["evidence_ref"],
+                    "observed_context": memory.get("observed_context", {}),
+                    "context_similarity": memory.get("context_similarity", 0)} for memory in memories]
         arguments = self._call(
             {"session_id": observation.session_id, "game_tick": observation.game_tick,
              "facts": observation.facts,
@@ -69,6 +71,7 @@ class ResponsesExperimentModel:
             "Choose one small experiment for the model-chosen goal. Use only the allowed actions. "
             "Past outcomes verify only primitive action effects, not strategic goal success "
             "or the truth of a free-text hypothesis. Use checked failures as counterexamples. "
+            "Recheck the observed context before applying any past action. "
             "Predict an observable result and state what would falsify it. "
             "A proposal is not evidence of success.",
             "Propose exactly one bounded tactical action and falsifiable prediction.",
