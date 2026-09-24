@@ -14,6 +14,24 @@ def observation(tick, state="same", session="session-a"):
 
 
 class ExperimentRunnerTests(unittest.TestCase):
+    def test_game_tick_budget_starts_with_bridge_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with ExperimentLedger(Path(directory) / "experiments.sqlite") as ledger:
+                snapshots = iter((observation(10), observation(3000)))
+                runner = ExperimentRunner(
+                    ledger, lambda: next(snapshots),
+                    lambda before: GoalChoice("progress", "get iron", "ore needed"),
+                    lambda before, goal, memories: ExperimentPlan(
+                        {"kind": "mine", "args": {"vein_id": 1}},
+                        "nearby", "ore gained", "no ore gained"),
+                    lambda action, before, operation_id: {
+                        "operation_id": operation_id, "status": "completed", "started_tick": 2900},
+                    lambda before, after, plan, result: Verification(
+                        "achieved", "checked mine", "evidence"),
+                    {"mine"}, max_game_ticks=1800,
+                )
+                self.assertEqual(runner.run_once()["verdict"], "achieved")
+
     def test_model_goal_and_memory_change_next_experiment(self):
         with tempfile.TemporaryDirectory() as directory:
             with ExperimentLedger(Path(directory) / "experiments.sqlite") as ledger:

@@ -160,7 +160,11 @@ class ExperimentRunner:
             self.ledger.record_verdict(attempt_id, "unknown", after.evidence_ref,
                                        "session or game tick changed unexpectedly")
             raise RunnerError("session changed; reconcile attempt: " + attempt_id)
-        if after.game_tick - before.game_tick > self.max_game_ticks:
+        started_tick = action_result.get("started_tick")
+        if (isinstance(started_tick, bool) or not isinstance(started_tick, int)
+                or not before.game_tick <= started_tick <= after.game_tick):
+            started_tick = before.game_tick if planned.action["kind"] in ("move", "mine") else after.game_tick
+        if after.game_tick - started_tick > self.max_game_ticks:
             self.ledger.record_verdict(attempt_id, "partial", after.evidence_ref,
                                        "game tick budget exceeded")
             return self.ledger.attempt(attempt_id)
