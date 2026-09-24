@@ -38,8 +38,18 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - The user redirected the project toward an agent that chooses feasible goals and learns reusable skills from checked game feedback. The UI-built line is a measurement baseline, not the agent's intended policy. No autonomous goal-selection episode has run; the [research comparison and experiment](../docs/AI-NATIVE-RESEARCH.md) record the proposed direction.
 - The AI-native contract now separates revisable strategy, near-term goals, and tactical experiments; it records predictions, outcomes, proposed causes, and applicability limits for future retrieval. This is documentation of intended behavior. No game-controlling experiment runner or demonstrated skill transfer exists yet.
 - An offline SQLite experiment ledger now persists chosen strategic and near-term goals, action predictions and falsifiers, before/after references, external verdicts, and proposed explanations. It blocks identical failed retries in the same state and unresolved attempts, and retrieves checked outcomes by exact near-term goal. The ledger has no model or game connection; caller-supplied evidence references are not self-validating.
+- An offline runner now asks injected providers for a goal and tactical experiment, supplies retrieved outcomes to the planner, records intent before action, and sends before/after observations to a separate verifier. Its allowlist and session checks prevent an unlisted action or stale result from silently passing. The only complete run is under fake providers; no real model selected a DSP goal and no game command was issued by the runner.
+- A Responses API adapter now offers two strictly structured proposals: a strategic and near-term goal, then one tactical inspect, walk, or mine experiment with a falsifiable prediction. Local validation bounds mining count and item IDs. HTTP tests use a fake opener; no key was used for a live request and no real model decision has been observed.
 
 ## Log
+
+### 2026-09-24 — Structured model goal and experiment proposals
+
+Added a Responses API adapter for goal choice and one bounded tactical proposal. It passes prior checked outcomes into the planning context and validates action parameters before the runner can execute them. The function-call schema follows the [official OpenAI function-calling guide](https://developers.openai.com/api/docs/guides/function-calling), with strict required fields and no additional properties. Mocked HTTP checks cover goal/plan parsing, memory context, key placement, and rejection of oversized mining requests. No paid API request or game action occurred.
+
+### 2026-09-24 — Offline model-directed experiment loop
+
+Added an injected one-attempt runner over the persistent ledger. An offline test demonstrates a first failed action entering memory and a second planner decision using that failure to choose another action. Other tests reject an unlisted command and hold unknown outcomes after adapter failure or session change for reconciliation. No live model call, actual verifier, or game action occurred. The action adapter and model provider remain integration work; the fake-planner test is not evidence of autonomous learning.
 
 ### 2026-09-24 — First offline self-directed experiment ledger
 

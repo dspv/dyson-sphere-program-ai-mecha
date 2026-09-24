@@ -28,6 +28,30 @@ class Proposal:
 
 def propose_next_step(snapshot, model, *, api_key=None, timeout=30, opener=None):
     """Return a structured suggestion based on a caller-supplied, bounded snapshot."""
+    arguments, response_id, total_tokens = call_structured_function(
+        snapshot, model, "propose_next_step",
+        "Propose one safe next step from the observed state. Treat unknown evidence as unknown. "
+        "Do not claim game actions happened.",
+        "Suggest one read-only inspection or planning step, pause, or blocker report.",
+        {
+            "operation": {"type": "string", "enum": sorted(OPERATIONS)},
+            "reason": {"type": "string"},
+            "target": {"type": ["string", "null"]},
+        }, api_key=api_key, timeout=timeout, opener=opener,
+    )
+    if (set(arguments) != {"operation", "reason", "target"}
+            or not isinstance(arguments["operation"], str)
+            or arguments["operation"] not in OPERATIONS
+            or not isinstance(arguments["reason"], str) or not arguments["reason"].strip()
+            or not (arguments["target"] is None or isinstance(arguments["target"], str))):
+        raise ModelPlannerError("proposal failed local validation")
+    return Proposal(arguments["operation"], arguments["reason"], arguments["target"],
+                    response_id, total_tokens)
+
+
+def call_structured_function(snapshot, model, name, instruction, description, properties,
+                             *, api_key=None, timeout=30, opener=None):
+    """Request one strict function call and return locally parsed arguments."""
     if not isinstance(snapshot, dict):
         raise ModelPlannerError("snapshot must be an object")
     if not isinstance(model, str) or not model.strip():
@@ -44,23 +68,18 @@ def propose_next_step(snapshot, model, *, api_key=None, timeout=30, opener=None)
         "parallel_tool_calls": False,
         "tool_choice": "required",
         "input": [
-            {"role": "developer", "content": "Propose one safe next step from the observed state. "
-             "Treat unknown evidence as unknown. Do not claim game actions happened."},
+            {"role": "developer", "content": instruction},
             {"role": "user", "content": snapshot_json},
         ],
         "tools": [{
             "type": "function",
-            "name": "propose_next_step",
-            "description": "Suggest one read-only inspection or planning step, pause, or blocker report.",
+            "name": name,
+            "description": description,
             "strict": True,
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "operation": {"type": "string", "enum": sorted(OPERATIONS)},
-                    "reason": {"type": "string"},
-                    "target": {"type": ["string", "null"]},
-                },
-                "required": ["operation", "reason", "target"],
+                "properties": properties,
+                "required": list(properties),
                 "additionalProperties": False,
             },
         }],
@@ -85,21 +104,16 @@ def propose_next_step(snapshot, model, *, api_key=None, timeout=30, opener=None)
         raise ModelPlannerError("Responses API did not complete")
     calls = [item for item in data.get("output", []) if isinstance(item, dict)
              and item.get("type") == "function_call"]
-    if len(calls) != 1 or calls[0].get("name") != "propose_next_step":
+    if len(calls) != 1 or calls[0].get("name") != name:
         raise ModelPlannerError("expected one proposal function call")
     try:
         arguments = json.loads(calls[0]["arguments"])
     except (KeyError, TypeError, ValueError) as exc:
         raise ModelPlannerError("invalid proposal arguments") from exc
-    if (not isinstance(arguments, dict) or set(arguments) != {"operation", "reason", "target"}
-            or not isinstance(arguments["operation"], str)
-            or arguments["operation"] not in OPERATIONS
-            or not isinstance(arguments["reason"], str) or not arguments["reason"].strip()
-            or not (arguments["target"] is None or isinstance(arguments["target"], str))):
+    if not isinstance(arguments, dict) or set(arguments) != set(properties):
         raise ModelPlannerError("proposal failed local validation")
     usage = data.get("usage") or {}
     total_tokens = usage.get("total_tokens") if isinstance(usage, dict) else None
     if not isinstance(total_tokens, int) or total_tokens < 0:
         total_tokens = None
-    return Proposal(arguments["operation"], arguments["reason"], arguments["target"],
-                    str(data.get("id", "")), total_tokens)
+    return arguments, str(data.get("id", "")), total_tokens
