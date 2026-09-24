@@ -96,6 +96,14 @@ The installed game's local-planet all-time ore and ingot counters matched the vi
 
 **Revisit if:** A per-entity counter is visibly verified, or a clean copied save and connected line make attribution unambiguous across multiple windows.
 
+## ADR-011 — Bound manual mining through the game's order path
+
+**Date:** 2026-09-24. **Source:** installed API inspection and copied-save trial. **Status:** accepted.
+
+Use `Player.Order(OrderNode.MineTarget(...), false)` for a short iron-ore collection command. This follows the installed game's normal mining energy, inventory, and depletion mechanics. Limit each operation to one to five ore, require a fresh session and finite-resource iron vein within 25 units, reject a mecha that could mine more than one ore per game tick, and stop when both inventory gain and vein depletion reach the request. A two-ore trial matched the visible inventory. This command prepares ordinary resources; it is not evidence of an automated miner or smelter line.
+
+**Revisit if:** The installed game changes its order semantics, or a different verified ordinary collection method is needed for later milestones.
+
 **Rules out:** Teleportation, setting player position directly, and interpreting HTTP acceptance as completed movement.
 
 **Revisit if:** The installed game's order semantics change, a normal walking order fails to stop on pause, or a future action API needs a stronger persistent operation model.

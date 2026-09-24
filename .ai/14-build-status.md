@@ -1,18 +1,18 @@
 # Build Status
 
-**Last updated: 2026-09-24. Phase: stage C research. Next: verify a single-entity iron-smelter counter and normal mining/construction APIs, prepare ordinary materials on a copied save, then build one connected iron segment.** The [verification policy](10-verification.md) defines what each status means.
+**Last updated: 2026-09-24. Phase: stage C partial implementation. Next: verify construction and a single-entity iron-smelter counter, prepare ordinary materials on a copied save, then build one connected iron segment.** The [verification policy](10-verification.md) defines what each status means.
 
 ## Progress by track
 
 These are coarse implementation indicators, not gameplay success rates. The same values appear in [README.md](../README.md).
 
-| Track             | Progress | State                      |
-| ----------------- | -------- | -------------------------- |
-| Documentation     | 50%      | Corpus and handoff drafted |
-| Protocol          | 50%      | Live operation polling     |
-| Bridge            | 50%      | Observer and walking order |
-| Agent             | 0%       | No model-driven gameplay   |
-| Game verification | 50%      | Stages A and B visible     |
+| Track             | Progress | State                       |
+| ----------------- | -------- | --------------------------- |
+| Documentation     | 50%      | Corpus and handoff drafted  |
+| Protocol          | 50%      | Live operation polling      |
+| Bridge            | 50%      | Observer and bounded orders |
+| Agent             | 0%       | No model-driven gameplay    |
+| Game verification | 50%      | A, B, and mining visible    |
 
 ## Milestones
 
@@ -20,7 +20,7 @@ These are coarse implementation indicators, not gameplay success rates. The same
 | ----------------- | ----------- |
 | A observer        | verified    |
 | B one action      | verified    |
-| C iron line       | research    |
+| C iron line       | partial     |
 | D model control   | not started |
 | E–K later roadmap | not started |
 
@@ -32,8 +32,13 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - The `net472` bridge loaded through BepInEx and answered health and observer calls from native PowerShell and Windows Python. At the Steam-launched menu, `/v1/observe` returned `not_loaded`; in a copied ordinary save it returned Ancha II, the same latitude/longitude shown in the UI, an empty inventory matching the open panel, and six iron veins totaling 57,655 reserves, matching the hovered cluster. A second copied ordinary save showed positive inventory and factory belts matching the visible factory. The mature save exceeded the scan and result caps, and the response marked both limits. Stage A's returned fields have live UI comparisons.
 - The first project-owned action, a bounded walking order to a nearby vein, visibly moved the mecha on the new game's experiment copy. Invalid vein and stale-session requests were rejected; replaying the same operation ID returned its prior result. Pausing a second move returned a partial result and stopped the order. This verifies stage B only. The MCP client, journal, offline planner, production verifier, and model proposal adapter remain offline-tested; no production run or live paid model call has occurred.
 - The observer now exposes local-planet all-time produced counters for iron ore and iron ingots. Both matched the visible Production Statistics totals on an active copied save, allowing for one item produced between the game-thread read and UI hover. These planet-wide counters include pre-existing production and cannot prove a specific new iron line. The candidate per-assembler total was withheld because it has no visible UI check yet.
+- The stage C experiment added a bounded ordinary iron mining order. On the new game's experiment copy, a two-ore request took iron vein ID 1 from 10,384 to 10,382, placed two ore in the inventory, and visibly moved the mecha beside the ore; the open inventory showed exactly two ore. An invalid vein was rejected, and replaying the completed operation ID left inventory unchanged. No miner, smelter, belt, power connection, or sustained ingot production has been built by the agent.
 
 ## Log
+
+### 2026-09-24 — Bounded iron mining verified on the copied new game
+
+Bridge `0.4.0` uses `Player.Order(OrderNode.MineTarget(...), false)` and the game's `PlayerAction_Mine` path, with a one-to-five ore bound, a 25-unit target bound, session and idle-walking checks, an empty inventory slot requirement, a mining-speed guard, and a 900-game-tick timeout. A native Windows Python request for invalid vein `999999` was rejected with `invalid_vein`. On the seed `33434023` experiment copy, a request for two iron ore from vein ID 1 started at tick `8,479` and completed at tick `8,785`: inventory `0→2`, vein amount `10,384→10,382`, and mecha position `(181.77948, -5.71299028, 87.05093)→(173.142654, 1.14360118, 101.922607)`. The visible mecha stood by the iron cluster and the open inventory showed a stack of two ore. Replaying the same operation ID returned the completed result; fresh inventory remained two. The final DLL tightened completion to require both inventory gain and vein depletion and rejected mining speeds that could yield multiple ore per tick. After installing it, a copied-save replay completed at tick `8,157→8,463` with the same `0→2` inventory and `10,384→10,382` vein changes. Its open inventory again visibly showed two ore. A direct request for six ore returned HTTP 400, leaving inventory and vein amount unchanged. The operation was run on a copy, with no direct save or pool edits. `make check` passed 24 offline tests and the installed build had zero warnings/errors. This does not establish automated factory production.
 
 ### 2026-09-24 — Planet production counters checked against the visible UI
 

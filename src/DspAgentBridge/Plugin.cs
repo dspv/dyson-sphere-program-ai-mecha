@@ -7,7 +7,7 @@ using BepInEx;
 
 namespace DspAgentBridge
 {
-    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.3.0")]
+    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.4.0")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private HttpListener listener;
@@ -97,7 +97,7 @@ namespace DspAgentBridge
             response.Headers.Add("Cache-Control", "no-store");
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/health")
             {
-                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.3.0\",\"status\":\"stage_b_unverified\"}");
+                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.4.0\",\"status\":\"stage_c_experimental\"}");
                 return;
             }
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/observe")
@@ -120,23 +120,27 @@ namespace DspAgentBridge
                 Write(response, 200, request.Json);
                 return;
             }
-            if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/v1/move-to-vein")
+            if (context.Request.HttpMethod == "POST" &&
+                (context.Request.Url.AbsolutePath == "/v1/move-to-vein" || context.Request.Url.AbsolutePath == "/v1/mine-vein"))
             {
+                var mining = context.Request.Url.AbsolutePath == "/v1/mine-vein";
                 string operationId = context.Request.QueryString["operation_id"];
                 string requiredSession = context.Request.QueryString["session_id"];
                 string rawVein = context.Request.QueryString["vein_id"];
                 Guid parsedOperation, parsedSession;
-                int veinId;
-                if (context.Request.RawUrl.Length > 256 || context.Request.QueryString.Count != 3 ||
+                int veinId, count = 0;
+                if (context.Request.RawUrl.Length > 256 || context.Request.QueryString.Count != (mining ? 4 : 3) ||
                     context.Request.ContentLength64 != 0 ||
                     !Guid.TryParseExact(operationId, "N", out parsedOperation) ||
                     !Guid.TryParseExact(requiredSession, "N", out parsedSession) ||
-                    !int.TryParse(rawVein, out veinId) || veinId <= 0)
+                    !int.TryParse(rawVein, out veinId) || veinId <= 0 ||
+                    (mining && (!int.TryParse(context.Request.QueryString["count"], out count) || count < 1 || count > 5)))
                 {
                     Write(response, 400, Movement.Error("invalid_request"));
                     return;
                 }
-                var result = movement.Enqueue(operationId, requiredSession, veinId);
+                var result = mining ? movement.EnqueueMine(operationId, requiredSession, veinId, count) :
+                    movement.Enqueue(operationId, requiredSession, veinId);
                 Write(response, result.Contains("\"status\":\"error\"") ? 409 : 202, result);
                 return;
             }

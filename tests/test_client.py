@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "Agent"))
-from dsp_agent.client import BridgeError, read_health, read_observation, read_operation, request_move_to_vein
+from dsp_agent.client import BridgeError, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -15,6 +15,9 @@ class Handler(BaseHTTPRequestHandler):
     operation_id = "0123456789abcdef0123456789abcdef"
 
     def do_POST(self):
+        if self.path.startswith("/v1/mine-vein?"):
+            self._send({"protocol_version": 1, "operation_id": self.operation_id, "action": "mine", "status": "pending"})
+            return
         if not self.path.startswith("/v1/move-to-vein?"):
             self.send_error(404)
             return
@@ -90,6 +93,23 @@ class ClientTests(unittest.TestCase):
             self.assertEqual(read_operation(operation_id, base)["reason"], "order_interrupted")
             with self.assertRaises(BridgeError):
                 request_move_to_vein(session, 0, operation_id, base)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+    def test_mining_count_is_bounded_before_request(self):
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            base = "http://127.0.0.1:" + str(server.server_port)
+            session = "fedcba9876543210fedcba9876543210"
+            operation_id = Handler.operation_id
+            self.assertEqual(request_mine_vein(session, 1, 5, operation_id, base)["status"], "pending")
+            for count in (0, 6, True):
+                with self.assertRaises(BridgeError):
+                    request_mine_vein(session, 1, count, operation_id, base)
         finally:
             server.shutdown()
             server.server_close()

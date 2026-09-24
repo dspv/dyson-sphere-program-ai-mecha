@@ -1,4 +1,4 @@
-"""Strict read-only bridge client. Gameplay actions are not implemented yet."""
+"""Bounded loopback client for bridge observations and guarded game actions."""
 
 import json
 import uuid
@@ -49,7 +49,7 @@ def _operation_id(value):
 
 def read_health(base_url="http://127.0.0.1:38741", timeout=3):
     payload = _read(base_url, "/v1/health", timeout, 4096)
-    if payload.get("status") not in ("bootstrap_only", "observer_unverified", "stage_b_unverified"):
+    if payload.get("status") not in ("bootstrap_only", "observer_unverified", "stage_b_unverified", "stage_c_experimental"):
         raise BridgeError("unexpected bridge status")
     if not isinstance(payload.get("bridge_version"), str):
         raise BridgeError("missing bridge version")
@@ -65,6 +65,20 @@ def request_move_to_vein(session_id, vein_id, operation_id, base_url="http://127
     payload = _request(base_url, "/v1/move-to-vein?" + query, timeout, 8192, "POST")
     if payload.get("operation_id") != operation_id or payload.get("status") not in ("pending", "running", "completed", "partial", "rejected"):
         raise BridgeError("invalid movement response")
+    return payload
+
+
+def request_mine_vein(session_id, vein_id, count, operation_id, base_url="http://127.0.0.1:38741", timeout=3):
+    _operation_id(operation_id)
+    _operation_id(session_id)
+    if isinstance(vein_id, bool) or not isinstance(vein_id, int) or vein_id <= 0:
+        raise BridgeError("vein ID must be a positive integer")
+    if isinstance(count, bool) or not isinstance(count, int) or count < 1 or count > 5:
+        raise BridgeError("mining count must be between 1 and 5")
+    query = parse.urlencode({"operation_id": operation_id, "session_id": session_id, "vein_id": vein_id, "count": count})
+    payload = _request(base_url, "/v1/mine-vein?" + query, timeout, 8192, "POST")
+    if payload.get("operation_id") != operation_id or payload.get("action") != "mine" or payload.get("status") not in ("pending", "running", "completed", "partial", "rejected"):
+        raise BridgeError("invalid mining response")
     return payload
 
 

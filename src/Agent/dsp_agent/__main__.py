@@ -1,14 +1,14 @@
-"""Inspect the local bridge and issue explicit, bounded movement operations."""
+"""Inspect the local bridge and issue explicit, bounded game orders."""
 
 import argparse
 import json
 import sys
-from .client import BridgeError, read_health, read_observation, read_operation, request_move_to_vein
+from .client import BridgeError, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
 from .mcp_stdio import McpError, StdioMcpClient
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="DSP bridge diagnostics and bounded movement")
+    parser = argparse.ArgumentParser(description="DSP bridge diagnostics and bounded orders")
     commands = parser.add_subparsers(dest="command")
     health = commands.add_parser("health", help="Read the project bootstrap endpoint")
     health.add_argument("--bridge", default="http://127.0.0.1:38741")
@@ -19,6 +19,12 @@ def main(argv=None):
     move.add_argument("--session-id", required=True)
     move.add_argument("--vein-id", type=int, required=True)
     move.add_argument("--operation-id", required=True, help="Stable UUID hex; reuse only to poll the same request")
+    mine = commands.add_parser("mine-vein", help="Mine at most five iron ore through a normal order")
+    mine.add_argument("--bridge", default="http://127.0.0.1:38741")
+    mine.add_argument("--session-id", required=True)
+    mine.add_argument("--vein-id", type=int, required=True)
+    mine.add_argument("--count", type=int, required=True)
+    mine.add_argument("--operation-id", required=True, help="Stable UUID hex; reuse only to poll the same request")
     operation = commands.add_parser("operation", help="Read a movement result without retrying it")
     operation.add_argument("--bridge", default="http://127.0.0.1:38741")
     operation.add_argument("--operation-id", required=True)
@@ -33,6 +39,8 @@ def main(argv=None):
             result = read_observation(args.bridge)
         elif args.command == "move-to-vein":
             result = request_move_to_vein(args.session_id, args.vein_id, args.operation_id, args.bridge)
+        elif args.command == "mine-vein":
+            result = request_mine_vein(args.session_id, args.vein_id, args.count, args.operation_id, args.bridge)
         elif args.command == "operation":
             result = read_operation(args.operation_id, args.bridge)
         else:
