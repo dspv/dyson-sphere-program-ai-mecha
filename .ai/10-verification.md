@@ -21,3 +21,5 @@ The optional Spherewright probe can establish only MCP connectivity, available t
 ## Strategy experiments
 
 Episode comparison follows this order: legal and continuable gameplay; milestone completion; sustained output; then game time, resources, actions, and API cost. A candidate skill is tested from a restored copy of the same checkpoint as its baseline. A failure or counterexample stays in the journal and in [strategies](../docs/STRATEGIES.md) before promotion.
+
+The offline [reward and learning policy](../docs/REWARD-LEARNING.md) narrows promotion to paired trials with attributed evidence. A score calculated from caller-supplied proofs is still an offline result until those proofs are tied to visible game observations. Inspect the source and identity of every production window before a strategy promotion is treated as gameplay learning.

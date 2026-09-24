@@ -34,8 +34,13 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - The observer now exposes local-planet all-time produced counters for iron ore and iron ingots. Both matched the visible Production Statistics totals on an active copied save, allowing for one item produced between the game-thread read and UI hover. These planet-wide counters include pre-existing production and cannot prove a specific new iron line. The candidate per-assembler total was withheld because it has no visible UI check yet.
 - The stage C experiment added a bounded ordinary iron mining order. On the new game's experiment copy, a two-ore request took iron vein ID 1 from 10,384 to 10,382, placed two ore in the inventory, and visibly moved the mecha beside the ore; the open inventory showed exactly two ore. An invalid vein was rejected, and replaying the completed operation ID left inventory unchanged. No miner, smelter, belt, or power connection has been placed by a bridge command, and no sustained ingot production has been measured from an agent-built line.
 - On a copied mature save, one Arc Smelter was selected from the inventory and placed using the game's own valid construction preview and click. After the mecha walked to it, the building's panel opened and reported `No power`, `Idle`, and no selected recipe. This proves an ordinary UI construction path and demonstrates why placement alone cannot satisfy stage C. The bridge has no construction command yet; the existing observer's first-4096 entity scan missed the new building, so a bounded recent-entity window and held-item read were added for live readback.
+- An offline reward evaluator now ranks verified white-matrix throughput above bounded intermediate progress points and elapsed game time. A local SQLite memory promotes a strategy version only after paired, non-regressing checkpoint trials. It has not consumed a real DSP episode or changed an in-game decision; the [policy](../docs/REWARD-LEARNING.md) details the evidence boundary.
 
 ## Log
+
+### 2026-09-24 — Offline reward and strategy comparison foundation
+
+Added configurable progression points, multi-window evidence validation, white-matrix throughput ranking, paired baseline/candidate comparison, and durable strategy promotion. Tests cover repeated early production, unattributed planet totals, nonordinary episodes, paired trials, regressions, and idempotent decision replay. No live reward feed, candidate generation, or model fine-tuning exists yet. Stage C remains partial.
 
 ### 2026-09-24 — Single smelter construction path and observer gap
 

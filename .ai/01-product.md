@@ -20,6 +20,8 @@ On a separate prepared save in ordinary construction mode with Dark Fog disabled
 
 The MVP is accepted only after development stages A–D in [03-roadmap.md](03-roadmap.md) have run in the real visible client. A compiled bridge or offline test is a narrower result.
 
+After the MVP, the desired optimization target is sustained white-matrix output. The [reward and learning policy](../docs/REWARD-LEARNING.md) defines how intermediate progress and strategy comparisons support that target; it does not change the first iron-line acceptance requirement.
+
 ## Trust contract
 
 - A `plan_*` request only reads state and calculates an option; it never changes the world.

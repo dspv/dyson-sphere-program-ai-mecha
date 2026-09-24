@@ -107,3 +107,13 @@ Use `Player.Order(OrderNode.MineTarget(...), false)` for a short iron-ore collec
 **Rules out:** Teleportation, setting player position directly, and interpreting HTTP acceptance as completed movement.
 
 **Revisit if:** The installed game's order semantics change, a normal walking order fails to stop on pause, or a future action API needs a stronger persistent operation model.
+
+## ADR-012 — Reward sustained downstream progress and promote strategies through paired trials
+
+**Date:** 2026-09-24. **Source:** user direction. **Status:** accepted as an offline policy, pending live validation.
+
+The long-term objective is sustained white-matrix throughput under ordinary gameplay. Intermediate production signals receive bounded, one-time progress points from attributed multi-window evidence. White throughput outranks intermediate points; repeated production of an already-established item does not continuously increase progress points. Candidate strategies are compared with an active baseline on matched checkpoint trials and promoted only without regression. The [policy](../docs/REWARD-LEARNING.md) owns details and limitations.
+
+**Rules out:** Per-item rewards that can be farmed indefinitely, inventory counts as production proof, and strategy promotion from unpaired or unverified episodes.
+
+**Revisit if:** Live episodes show that the policy favors stalled or irrelevant factories, or a different verified objective better captures the owner's goal.

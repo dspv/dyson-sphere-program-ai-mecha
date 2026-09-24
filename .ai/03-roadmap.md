@@ -27,3 +27,5 @@ Each milestone needs observed prerequisites, a next feasible substep, a named bl
 ## Improving behavior
 
 Log complete episodes and observed costs before changing strategy. Diagnose a failure, alter one strategy or threshold, and compare baseline and candidate on copies of the same checkpoint; test a second suitable save when possible. Promote a skill only after measured improvement without regressions. Cap retries and API use, and stop repeated identical blockers. Store applicability and counterexamples with skills. The episode store stays local by default; only deliberately anonymized examples enter git.
+
+The [reward and learning policy](../docs/REWARD-LEARNING.md) defines the eventual white-matrix objective, intermediate evidence points, and paired-trial promotion rule. Its evaluator is offline-only until attributed production signals and game episodes are connected.

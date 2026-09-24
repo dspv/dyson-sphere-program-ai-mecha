@@ -22,6 +22,8 @@ The observer's first entity window scans up to 4096 pool indices; a separate `re
 
 The agent also has a bounded read-only MCP stdio client for probing a compatible Spherewright installation. It negotiates MCP `2025-06-18`, lists tools, reads the upstream opening playbook, and calls only an explicit inspection allowlist. The roadmap planner selects a milestone from explicit tri-state evidence. A production verifier requires positive deltas from one game entity's cumulative counter across multiple game-time windows. A Responses API adapter can request one strictly typed proposal from a configured model; its operations are limited to inspection, planning, pausing, or reporting a blocker. The adapter does not execute the proposal or call game write tools. These planning paths have only offline test evidence. The broader construction contract below remains a design target.
 
+An offline reward evaluator scores verified episode outcomes, and a local SQLite strategy memory promotes a candidate only after paired checkpoint trials improve without regression. The [reward and learning policy](../docs/REWARD-LEARNING.md) owns the objective, evidence boundary, and integration sequence. No live game observation feeds this evaluator yet.
+
 ## Bridge
 
 The network listener binds only to loopback. It parses and bounds requests, then queues game work. The Unity game thread reads or mutates game state. Mutation validates session, save load, planet, snapshot freshness, and game prerequisites, and returns a truthful status on partial completion. An idempotency key prevents repeated placement. Long operations expose polling and cancellation. The bridge never holds an OpenAI key.

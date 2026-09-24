@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "status": "policy_parameters_not_game_measurements",
+  "minimum_paired_trials": 2,
+  "signal_points": {
+    "iron_ore_flow_observed": 1,
+    "iron_ingot_output_sustained": 2,
+    "copper_ingot_output_sustained": 2,
+    "circuit_output_sustained": 3,
+    "blue_matrix_output_sustained": 5,
+    "red_matrix_output_sustained": 8,
+    "yellow_matrix_output_sustained": 13,
+    "purple_matrix_output_sustained": 21,
+    "green_matrix_output_sustained": 34,
+    "white_matrix_output_sustained": 55
+  }
+}
