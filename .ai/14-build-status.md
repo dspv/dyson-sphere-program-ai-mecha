@@ -40,8 +40,13 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - An offline SQLite experiment ledger now persists chosen strategic and near-term goals, action predictions and falsifiers, before/after references, external verdicts, and proposed explanations. It blocks identical failed retries in the same state and unresolved attempts, and retrieves checked outcomes by exact near-term goal. The ledger has no model or game connection; caller-supplied evidence references are not self-validating.
 - An offline runner now asks injected providers for a goal and tactical experiment, supplies retrieved outcomes to the planner, records intent before action, and sends before/after observations to a separate verifier. Its allowlist and session checks prevent an unlisted action or stale result from silently passing. The only complete run is under fake providers; no real model selected a DSP goal and no game command was issued by the runner.
 - A Responses API adapter now offers two strictly structured proposals: a strategic and near-term goal, then one tactical inspect, walk, or mine experiment with a falsifiable prediction. Local validation bounds mining count and item IDs. HTTP tests use a fake opener; no key was used for a live request and no real model decision has been observed.
+- An experiment bridge adapter now stores raw private observation snapshots, rejects a plan when the relevant world state changed before submission, sends one observed walk/mine request, and polls the same operation ID within a fixed bound. A primitive verifier cross-checks operation results with fresh position or inventory and vein readback. Checked memory retrieval is limited to the same game version when known. All combined runner tests use fake bridge responses; the newly wired path has not been exercised in DSP and makes no production or strategic-goal claim.
 
 ## Log
+
+### 2026-09-24 — Guarded bridge adapter and primitive action verifier
+
+Connected the one-attempt runner to the existing bridge client through an adapter that saves raw snapshots under a caller-selected private directory, re-observes before mutation, validates a nearby target, and polls one operation ID without replaying POST. Timeout or lost identity leaves an unresolved attempt. A verifier checks walking position or both mining counters and fresh inventory/vein state; it does not score a factory or verify model-written predictions. Offline tests cover stale state, invalid targets, operation polling, unresolved timeout, and a fake end-to-end mining cycle. No Windows client or DSP save was touched during this slice.
 
 ### 2026-09-24 — Structured model goal and experiment proposals
 

@@ -1,5 +1,6 @@
 import sys
 import tempfile
+import sqlite3
 import unittest
 from pathlib import Path
 
@@ -67,6 +68,32 @@ class ExperimentLedgerTests(unittest.TestCase):
                 with self.assertRaises(ExperimentError):
                     ledger.record_verdict(attempt, "achieved", "obs-2", "model says it worked")
                 self.assertEqual(ledger.memories("find iron"), [])
+
+    def test_memory_from_other_game_version_is_not_supplied(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with ExperimentLedger(Path(directory) / "experiments.sqlite") as ledger:
+                goal = ledger.choose_goal("session-a", "progress", "find iron", "ore needed",
+                                          "obs-1", game_version="build-a")
+                attempt = ledger.start_attempt("session-a", goal, "operation-1", "state-1",
+                                               {"kind": "inspect", "args": {}},
+                                               "nearby", "veins", "none", "obs-1")
+                ledger.record_verdict(attempt, "achieved", "obs-2", "veins observed", "ui-2")
+                self.assertEqual(len(ledger.memories("find iron", game_version="build-a")), 1)
+                self.assertEqual(ledger.memories("find iron", game_version="build-b"), [])
+
+    def test_existing_goal_database_adds_version_column(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "experiments.sqlite"
+            with sqlite3.connect(path) as connection:
+                connection.execute(
+                    "CREATE TABLE goals (goal_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, "
+                    "strategic_goal TEXT NOT NULL, near_term_goal TEXT NOT NULL, reason TEXT NOT NULL, "
+                    "observation_ref TEXT NOT NULL)"
+                )
+            with ExperimentLedger(path) as ledger:
+                goal = ledger.choose_goal("session-a", "progress", "iron", "needed", "obs-1",
+                                          game_version="build-a")
+                self.assertIsNotNone(goal)
 
 
 if __name__ == "__main__":

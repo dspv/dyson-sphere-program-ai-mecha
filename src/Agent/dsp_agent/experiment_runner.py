@@ -105,13 +105,15 @@ class ExperimentRunner:
         if not isinstance(goal, GoalChoice):
             raise RunnerError("model did not return a GoalChoice")
         goal.validate()
-        memories = self.ledger.memories(goal.near_term_goal)
+        game_version = before.facts.get("game_version")
+        memories = self.ledger.memories(goal.near_term_goal, game_version=game_version)
         planned = self.plan(before, goal, memories)
         if not isinstance(planned, ExperimentPlan):
             raise RunnerError("model did not return an ExperimentPlan")
         planned.validate(self.allowed_actions)
         goal_id = self.ledger.choose_goal(before.session_id, goal.strategic_goal,
-                                          goal.near_term_goal, goal.reason, before.evidence_ref)
+                                          goal.near_term_goal, goal.reason, before.evidence_ref,
+                                          game_version=game_version)
         operation_id = uuid.uuid4().hex
         attempt_id = self.ledger.start_attempt(
             before.session_id, goal_id, operation_id, before.state_fingerprint,

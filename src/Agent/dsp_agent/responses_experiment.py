@@ -55,7 +55,7 @@ class ResponsesExperimentModel:
         goal.validate()
         if not isinstance(memories, list) or len(memories) > 32:
             raise ModelPlannerError("invalid memory context")
-        lessons = [{"outcome": memory["verdict"], "action": memory["action"],
+        lessons = [{"primitive_action_outcome": memory["verdict"], "action": memory["action"],
                     "hypothesis": memory["hypothesis"], "explanation": memory["explanation"],
                     "evidence_ref": memory["evidence_ref"]} for memory in memories]
         arguments = self._call(
@@ -67,8 +67,10 @@ class ResponsesExperimentModel:
              "allowed_actions": sorted(self.allowed_actions)},
             "plan_experiment",
             "Choose one small experiment for the model-chosen goal. Use only the allowed actions. "
-            "Use checked failures as counterexamples. Predict an observable result and state "
-            "what would falsify it. A proposal is not evidence of success.",
+            "Past outcomes verify only primitive action effects, not strategic goal success "
+            "or the truth of a free-text hypothesis. Use checked failures as counterexamples. "
+            "Predict an observable result and state what would falsify it. "
+            "A proposal is not evidence of success.",
             "Propose exactly one bounded tactical action and falsifiable prediction.",
             {"kind": {"type": "string", "enum": sorted(self.allowed_actions)},
              "target_id": {"type": ["integer", "null"]},

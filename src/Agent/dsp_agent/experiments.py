@@ -46,7 +46,8 @@ class ExperimentLedger:
                 strategic_goal TEXT NOT NULL,
                 near_term_goal TEXT NOT NULL,
                 reason TEXT NOT NULL,
-                observation_ref TEXT NOT NULL
+                observation_ref TEXT NOT NULL,
+                game_version TEXT
             );
             CREATE TABLE IF NOT EXISTS attempts (
                 attempt_id TEXT PRIMARY KEY,
@@ -65,6 +66,9 @@ class ExperimentLedger:
             );
             """
         )
+        columns = {row[1] for row in self.connection.execute("PRAGMA table_info(goals)")}
+        if "game_version" not in columns:
+            self.connection.execute("ALTER TABLE goals ADD COLUMN game_version TEXT")
 
     def close(self):
         self.connection.close()
@@ -75,11 +79,14 @@ class ExperimentLedger:
     def __exit__(self, *_):
         self.close()
 
-    def choose_goal(self, session_id, strategic_goal, near_term_goal, reason, observation_ref):
+    def choose_goal(self, session_id, strategic_goal, near_term_goal, reason, observation_ref,
+                    game_version=None):
         values = [_required(value, name) for value, name in (
             (session_id, "session ID"), (strategic_goal, "strategic goal"),
             (near_term_goal, "near-term goal"), (reason, "reason"),
             (observation_ref, "observation reference"))]
+        if game_version is not None:
+            _required(game_version, "game version")
         with self.connection:
             if self.connection.execute(
                 "SELECT 1 FROM attempts a JOIN goals g ON a.goal_id = g.goal_id "
@@ -88,7 +95,11 @@ class ExperimentLedger:
             ).fetchone():
                 raise ExperimentError("unresolved attempt requires reconciliation")
             goal_id = uuid.uuid4().hex
-            self.connection.execute("INSERT INTO goals VALUES (?, ?, ?, ?, ?, ?)", (goal_id, *values))
+            self.connection.execute(
+                "INSERT INTO goals (goal_id, session_id, strategic_goal, near_term_goal, reason, "
+                "observation_ref, game_version) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (goal_id, *values, game_version),
+            )
         return goal_id
 
     def start_attempt(self, session_id, goal_id, operation_id, state_fingerprint,
@@ -150,6 +161,7 @@ class ExperimentLedger:
     def attempt(self, attempt_id):
         row = self.connection.execute(
             "SELECT a.operation_id, a.goal_id, g.session_id, g.strategic_goal, g.near_term_goal, "
+            "g.game_version, "
             "a.state_fingerprint, a.action_json, a.hypothesis, a.prediction, a.falsifier, "
             "a.before_ref, a.verdict, a.after_ref, a.evidence_ref, a.explanation "
             "FROM attempts a JOIN goals g ON a.goal_id = g.goal_id WHERE a.attempt_id = ?",
@@ -158,6 +170,7 @@ class ExperimentLedger:
         if row is None:
             raise KeyError(attempt_id)
         keys = ("operation_id", "goal_id", "session_id", "strategic_goal", "near_term_goal",
+                "game_version",
                 "state_fingerprint", "action", "hypothesis", "prediction", "falsifier",
                 "before_ref", "verdict", "after_ref", "evidence_ref", "explanation")
         result = dict(zip(keys, row))
@@ -165,14 +178,21 @@ class ExperimentLedger:
         result["attempt_id"] = attempt_id
         return result
 
-    def memories(self, near_term_goal, limit=8):
+    def memories(self, near_term_goal, limit=8, *, game_version=None):
         _required(near_term_goal, "near-term goal")
+        if game_version is not None:
+            _required(game_version, "game version")
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 32:
             raise ExperimentError("memory limit must be between 1 and 32")
-        rows = self.connection.execute(
+        query = (
             "SELECT a.attempt_id FROM attempts a JOIN goals g ON a.goal_id = g.goal_id "
             "WHERE g.near_term_goal = ? AND a.verdict IN ('achieved', 'failed') "
-            "AND a.evidence_ref IS NOT NULL ORDER BY a.rowid DESC LIMIT ?",
-            (near_term_goal, limit),
-        ).fetchall()
+            "AND a.evidence_ref IS NOT NULL"
+        )
+        parameters = [near_term_goal]
+        if game_version is not None:
+            query += " AND g.game_version = ?"
+            parameters.append(game_version)
+        query += " ORDER BY a.rowid DESC LIMIT ?"
+        rows = self.connection.execute(query, (*parameters, limit)).fetchall()
         return [self.attempt(row[0]) for row in rows]
