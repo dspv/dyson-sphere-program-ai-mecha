@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 from .bridge_experiment import BridgeExperimentAdapter, BridgeExperimentError, make_bridge_runner
-from .client import BridgeError, read_build_preview, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
+from .client import BridgeError, read_build_operation, read_build_preview, read_entity, read_health, read_observation, read_operation, request_confirm_build, request_mine_vein, request_move_to_vein
 from .experiment_runner import RunnerError
 from .experiments import ExperimentError, ExperimentLedger
 from .mcp_stdio import McpError, StdioMcpClient
@@ -25,6 +25,17 @@ def main(argv=None):
     entity.add_argument("--entity-id", type=int, required=True)
     preview = commands.add_parser("build-preview", help="Read the current UI construction preview")
     preview.add_argument("--bridge", default="http://127.0.0.1:38741")
+    confirm = commands.add_parser("confirm-build", help="Confirm one observed Arc Smelter preview")
+    confirm.add_argument("--bridge", default="http://127.0.0.1:38741")
+    confirm.add_argument("--session-id", required=True)
+    confirm.add_argument("--item-id", type=int, required=True)
+    confirm.add_argument("--x", type=float, required=True)
+    confirm.add_argument("--y", type=float, required=True)
+    confirm.add_argument("--z", type=float, required=True)
+    confirm.add_argument("--operation-id", required=True)
+    build_operation = commands.add_parser("build-operation", help="Read one construction result")
+    build_operation.add_argument("--bridge", default="http://127.0.0.1:38741")
+    build_operation.add_argument("--operation-id", required=True)
     move = commands.add_parser("move-to-vein", help="Order a walking mecha to one nearby vein")
     move.add_argument("--bridge", default="http://127.0.0.1:38741")
     move.add_argument("--session-id", required=True)
@@ -59,6 +70,12 @@ def main(argv=None):
             result = read_entity(args.entity_id, args.bridge)
         elif args.command == "build-preview":
             result = read_build_preview(args.bridge)
+        elif args.command == "confirm-build":
+            result = request_confirm_build(args.session_id, args.item_id,
+                                           {"x": args.x, "y": args.y, "z": args.z},
+                                           args.operation_id, args.bridge)
+        elif args.command == "build-operation":
+            result = read_build_operation(args.operation_id, args.bridge)
         elif args.command == "move-to-vein":
             result = request_move_to_vein(args.session_id, args.vein_id, args.operation_id, args.bridge)
         elif args.command == "mine-vein":

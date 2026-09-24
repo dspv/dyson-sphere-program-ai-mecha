@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Threading;
 using BepInEx;
+using UnityEngine;
 
 namespace DspAgentBridge
 {
-    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.5.1")]
+    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.6.0")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private HttpListener listener;
@@ -18,6 +20,7 @@ namespace DspAgentBridge
         private bool currentReady;
         private string sessionId;
         private readonly Movement movement = new Movement();
+        private readonly Construction construction = new Construction();
 
         private sealed class ObservationRequest
         {
@@ -76,6 +79,7 @@ namespace DspAgentBridge
                 movement.FailActive();
                 Logger.LogError("Movement update failed: " + error);
             }
+            construction.Tick(sessionId, movement.Busy);
 
             ObservationRequest request = null;
             lock (observationQueue)
@@ -103,7 +107,7 @@ namespace DspAgentBridge
             response.Headers.Add("Cache-Control", "no-store");
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/health")
             {
-                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.5.1\",\"status\":\"stage_c_experimental\"}");
+                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.6.0\",\"status\":\"stage_c_experimental\"}");
                 return;
             }
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/observe")
@@ -160,6 +164,45 @@ namespace DspAgentBridge
                 var result = mining ? movement.EnqueueMine(operationId, requiredSession, veinId, count, itemId) :
                     movement.Enqueue(operationId, requiredSession, veinId);
                 Write(response, result.Contains("\"status\":\"error\"") ? 409 : 202, result);
+                return;
+            }
+            if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/v1/confirm-build")
+            {
+                var query = context.Request.QueryString;
+                var operationId = query["operation_id"];
+                var requiredSession = query["session_id"];
+                Guid parsedOperation, parsedSession;
+                int itemId;
+                float x, y, z;
+                if (context.Request.RawUrl.Length > 320 || query.Count != 6 || context.Request.ContentLength64 != 0 ||
+                    !Guid.TryParseExact(operationId, "N", out parsedOperation) ||
+                    !Guid.TryParseExact(requiredSession, "N", out parsedSession) ||
+                    !int.TryParse(query["item_id"], out itemId) || itemId != 2302 ||
+                    !float.TryParse(query["x"], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
+                    !float.TryParse(query["y"], NumberStyles.Float, CultureInfo.InvariantCulture, out y) ||
+                    !float.TryParse(query["z"], NumberStyles.Float, CultureInfo.InvariantCulture, out z) ||
+                    float.IsNaN(x) || float.IsNaN(y) || float.IsNaN(z) ||
+                    float.IsInfinity(x) || float.IsInfinity(y) || float.IsInfinity(z))
+                {
+                    Write(response, 400, Movement.Error("invalid_request"));
+                    return;
+                }
+                var result = construction.Enqueue(operationId, requiredSession, itemId, new Vector3(x, y, z));
+                Write(response, result.Contains("\"status\":\"error\"") ? 409 : 202, result);
+                return;
+            }
+            if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/build-operation")
+            {
+                var operationId = context.Request.QueryString["operation_id"];
+                Guid parsedOperation;
+                if (context.Request.RawUrl.Length > 128 || context.Request.QueryString.Count != 1 ||
+                    !Guid.TryParseExact(operationId, "N", out parsedOperation))
+                {
+                    Write(response, 400, Movement.Error("invalid_operation_id"));
+                    return;
+                }
+                var result = construction.Get(operationId);
+                Write(response, result.Contains("\"status\":\"error\"") ? 404 : 200, result);
                 return;
             }
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/operation")

@@ -16,6 +16,11 @@ namespace DspAgentBridge
         private readonly Dictionary<string, MoveOperation> operations = new Dictionary<string, MoveOperation>();
         private MoveOperation active;
 
+        internal bool Busy
+        {
+            get { lock (gate) return active != null; }
+        }
+
         private sealed class MoveOperation
         {
             public string Id;

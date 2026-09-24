@@ -1,6 +1,7 @@
 """Bounded loopback client for bridge observations and guarded game actions."""
 
 import json
+import math
 import uuid
 from urllib import error, parse, request
 
@@ -95,6 +96,37 @@ def read_operation(operation_id, base_url="http://127.0.0.1:38741", timeout=3):
     payload = _read(base_url, "/v1/operation?" + query, timeout, 8192)
     if payload.get("operation_id") != operation_id or payload.get("status") not in ("pending", "running", "completed", "partial", "rejected"):
         raise BridgeError("invalid operation response")
+    return payload
+
+
+def request_confirm_build(session_id, item_id, position, operation_id,
+                          base_url="http://127.0.0.1:38741", timeout=3):
+    """Confirm one current in-game Arc Smelter preview at an observed position."""
+    _operation_id(operation_id)
+    _operation_id(session_id)
+    if item_id != 2302 or isinstance(item_id, bool):
+        raise BridgeError("only an Arc Smelter preview is supported")
+    if not isinstance(position, dict) or set(position) != {"x", "y", "z"} or any(
+            isinstance(position[axis], bool) or not isinstance(position[axis], (int, float))
+            or not math.isfinite(position[axis]) for axis in ("x", "y", "z")):
+        raise BridgeError("expected position must have finite x, y, z")
+    query = parse.urlencode({"operation_id": operation_id, "session_id": session_id,
+                             "item_id": item_id, **position})
+    payload = _request(base_url, "/v1/confirm-build?" + query, timeout, 8192, "POST")
+    if (payload.get("operation_id") != operation_id or payload.get("action") != "confirm_build"
+            or payload.get("session_id") != session_id or payload.get("item_id") != item_id
+            or payload.get("status") not in ("pending", "completed", "partial", "rejected")):
+        raise BridgeError("invalid construction response")
+    return payload
+
+
+def read_build_operation(operation_id, base_url="http://127.0.0.1:38741", timeout=3):
+    _operation_id(operation_id)
+    query = parse.urlencode({"operation_id": operation_id})
+    payload = _read(base_url, "/v1/build-operation?" + query, timeout, 8192)
+    if (payload.get("operation_id") != operation_id or payload.get("action") != "confirm_build"
+            or payload.get("status") not in ("pending", "completed", "partial", "rejected")):
+        raise BridgeError("invalid construction operation response")
     return payload
 
 

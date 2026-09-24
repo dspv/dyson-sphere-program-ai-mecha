@@ -28,6 +28,8 @@ An offline reward evaluator scores verified episode outcomes, and a local SQLite
 
 The network listener binds only to loopback. It parses and bounds requests, then queues game work. The Unity game thread reads or mutates game state. Mutation validates session, save load, planet, snapshot freshness, and game prerequisites, and returns a truthful status on partial completion. An idempotency key prevents repeated placement. Long operations expose polling and cancellation. The bridge never holds an OpenAI key.
 
+`Construction.cs` currently accepts only one Arc Smelter confirmation from the active game UI preview. The HTTP request carries a session, stable operation ID, item ID, and exact expected position. The game thread requires one valid matching preview and reruns the game's build checks before invoking its own prebuild method once; the result checks item consumption and a new prebuild ID. Repeated operation IDs return the stored result. This does not provide autonomous item selection, cursor placement, or a line builder.
+
 Observations use a compact summary plus bounded `inspect_area` and `inspect_entity` detail. They include game and mod versions, session and tick, current planet/mecha, inventory, relevant technologies and recipes, nearby resources and buildings, power and production, and incomplete actions. Later scopes add technology-tree detail, exploration, logistics, storage, and flight. Stable entity IDs and explicit `unknown` values prevent false zeros and confusion across sessions.
 
 ## Agent

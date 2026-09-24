@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "Agent"))
-from dsp_agent.client import BridgeError, read_build_preview, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
+from dsp_agent.client import BridgeError, read_build_operation, read_build_preview, read_entity, read_health, read_observation, read_operation, request_confirm_build, request_mine_vein, request_move_to_vein
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -15,6 +15,11 @@ class Handler(BaseHTTPRequestHandler):
     operation_id = "0123456789abcdef0123456789abcdef"
 
     def do_POST(self):
+        if self.path.startswith("/v1/confirm-build?"):
+            self._send({"protocol_version": 1, "operation_id": self.operation_id,
+                        "session_id": "fedcba9876543210fedcba9876543210",
+                        "action": "confirm_build", "item_id": 2302, "status": "pending"})
+            return
         if self.path.startswith("/v1/mine-vein?"):
             item_id = 1002 if "item_id=1002" in self.path else 1001
             self._send({"protocol_version": 1, "operation_id": self.operation_id, "action": "mine", "item_id": item_id, "status": "pending"})
@@ -25,6 +30,10 @@ class Handler(BaseHTTPRequestHandler):
         self._send({"protocol_version": 1, "operation_id": self.operation_id, "status": "pending"})
 
     def do_GET(self):
+        if self.path.startswith("/v1/build-operation?"):
+            self._send({"protocol_version": 1, "operation_id": self.operation_id,
+                        "action": "confirm_build", "status": "rejected", "reason": "game_paused"})
+            return
         if self.path == "/v1/build-preview":
             self._send({"protocol_version": 1, "status": "ok", "session_id": "session-a",
                         "planet_id": 102, "game_tick": 100, "active": True, "preview_count": 1,
@@ -151,6 +160,25 @@ class ClientTests(unittest.TestCase):
         try:
             base = "http://127.0.0.1:" + str(server.server_port)
             self.assertEqual(read_build_preview(base)["single_preview"]["item_id"], 2302)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+    def test_build_confirmation_is_one_item_and_position_bound(self):
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            base = "http://127.0.0.1:" + str(server.server_port)
+            session = "fedcba9876543210fedcba9876543210"
+            operation_id = Handler.operation_id
+            position = {"x": 1.0, "y": 2.0, "z": 3.0}
+            self.assertEqual(request_confirm_build(session, 2302, position, operation_id, base)["status"], "pending")
+            self.assertEqual(read_build_operation(operation_id, base)["reason"], "game_paused")
+            for item, place in ((2301, position), (2302, {"x": float("nan"), "y": 2, "z": 3})):
+                with self.assertRaises(BridgeError):
+                    request_confirm_build(session, item, place, operation_id, base)
         finally:
             server.shutdown()
             server.server_close()
