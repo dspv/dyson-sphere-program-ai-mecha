@@ -73,7 +73,11 @@ class ResponsesExperimentModel:
             "or the truth of a free-text hypothesis. Use checked failures as counterexamples. "
             "Recheck the observed context before applying any past action. "
             "Predict an observable result and state what would falsify it. "
-            "A proposal is not evidence of success.",
+            "A proposal is not evidence of success. "
+            "For inspect, set target_id, count, and item_id to null. "
+            "For move, set target_id to the observed vein ID and count and item_id to null. "
+            "For mine, set target_id to the observed vein ID, count from 1 to 5, "
+            "and item_id to 1001 for iron or 1002 for copper.",
             "Propose exactly one bounded tactical action and falsifiable prediction.",
             {"kind": {"type": "string", "enum": sorted(self.allowed_actions)},
              "target_id": {"type": ["integer", "null"]},

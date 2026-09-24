@@ -17,7 +17,7 @@ class ExperimentCliTests(unittest.TestCase):
         allowed_sets = []
 
         class FakeModel:
-            def __init__(self, _model, allowed):
+            def __init__(self, _model, allowed, **_kwargs):
                 allowed_sets.append(allowed)
 
         class FakeRunner:
@@ -25,14 +25,13 @@ class ExperimentCliTests(unittest.TestCase):
                 return {"verdict": "achieved"}
 
         with tempfile.TemporaryDirectory() as directory:
-            with (patch("dsp_agent.__main__.ResponsesExperimentModel", FakeModel),
+            with (patch("dsp_agent.__main__.CodexExperimentModel", FakeModel),
                   patch("dsp_agent.__main__.ExperimentLedger"),
                   patch("dsp_agent.__main__.BridgeExperimentAdapter"),
                   patch("dsp_agent.__main__.make_bridge_runner", return_value=FakeRunner()),
                   contextlib.redirect_stdout(io.StringIO())):
                 for extra in ([], ["--allow-game-write"]):
-                    code = main(["experiment-once", "--model", "test-model",
-                                 "--data-dir", directory, *extra])
+                    code = main(["experiment-once", "--data-dir", directory, *extra])
                     self.assertEqual(code, 0)
         self.assertEqual(allowed_sets, [{"inspect"}, {"inspect", "move", "mine"}])
 

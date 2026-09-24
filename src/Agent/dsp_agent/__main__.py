@@ -2,9 +2,11 @@
 
 import argparse
 import json
+import shlex
 import sys
 from pathlib import Path
 from .bridge_experiment import BridgeExperimentAdapter, BridgeExperimentError, make_bridge_runner
+from .codex_experiment import CodexExperimentModel
 from .client import BridgeError, read_build_operation, read_build_preview, read_entity, read_health, read_observation, read_operation, request_confirm_build, request_mine_vein, request_move_to_vein
 from .experiment_runner import RunnerError
 from .experiments import ExperimentError, ExperimentLedger
@@ -53,7 +55,11 @@ def main(argv=None):
     operation.add_argument("--operation-id", required=True)
     experiment = commands.add_parser("experiment-once", help="Ask a model for one goal and one checked experiment")
     experiment.add_argument("--bridge", default="http://127.0.0.1:38741")
-    experiment.add_argument("--model", required=True)
+    experiment.add_argument("--provider", choices=("codex", "responses"), default="codex",
+                            help="Signed-in Codex CLI by default; Responses API is optional")
+    experiment.add_argument("--model", help="Optional Codex model; required for Responses API")
+    experiment.add_argument("--codex-command", default="codex",
+                            help="Codex executable command; Windows can use 'wsl.exe --exec /path/to/codex'")
     experiment.add_argument("--data-dir", required=True, help="Private local directory for the ledger and raw observations")
     experiment.add_argument("--allow-game-write", action="store_true",
                             help="Allow one guarded walking or mining order; default is read-only inspection")
@@ -86,7 +92,13 @@ def main(argv=None):
         elif args.command == "experiment-once":
             allowed = {"inspect", "move", "mine"} if args.allow_game_write else {"inspect"}
             data_dir = Path(args.data_dir).resolve()
-            model = ResponsesExperimentModel(args.model, allowed)
+            if args.provider == "responses":
+                if not args.model:
+                    raise ModelPlannerError("--model is required for Responses API")
+                model = ResponsesExperimentModel(args.model, allowed)
+            else:
+                model = CodexExperimentModel(args.model, allowed,
+                                             command=shlex.split(args.codex_command))
             ledger = ExperimentLedger(data_dir / "ledger.sqlite3")
             adapter = BridgeExperimentAdapter(data_dir / "observations", base_url=args.bridge,
                                               max_polls=120, poll_interval=0.5)
