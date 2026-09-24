@@ -53,16 +53,22 @@ def main(argv=None):
     operation = commands.add_parser("operation", help="Read a movement result without retrying it")
     operation.add_argument("--bridge", default="http://127.0.0.1:38741")
     operation.add_argument("--operation-id", required=True)
-    experiment = commands.add_parser("experiment-once", help="Ask a model for one goal and one checked experiment")
-    experiment.add_argument("--bridge", default="http://127.0.0.1:38741")
-    experiment.add_argument("--provider", choices=("codex", "responses"), default="codex",
-                            help="Signed-in Codex CLI by default; Responses API is optional")
-    experiment.add_argument("--model", help="Optional Codex model; required for Responses API")
-    experiment.add_argument("--codex-command", default="codex",
-                            help="Codex executable command; Windows can use 'wsl.exe --exec /path/to/codex'")
-    experiment.add_argument("--data-dir", required=True, help="Private local directory for the ledger and raw observations")
-    experiment.add_argument("--allow-game-write", action="store_true",
-                            help="Allow one guarded walking or mining order; default is read-only inspection")
+    for name, description in (("experiment-once", "Ask a model for one checked experiment"),
+                              ("experiment-run", "Run up to five checked experiments")):
+        experiment = commands.add_parser(name, help=description)
+        experiment.add_argument("--bridge", default="http://127.0.0.1:38741")
+        experiment.add_argument("--provider", choices=("codex", "responses"), default="codex",
+                                help="Signed-in Codex CLI by default; Responses API is optional")
+        experiment.add_argument("--model", help="Optional Codex model; required for Responses API")
+        experiment.add_argument("--codex-command", default="codex",
+                                help="Codex executable command; Windows can use 'wsl.exe --exec /path/to/codex'")
+        experiment.add_argument("--data-dir", required=True,
+                                help="Private local directory for the ledger and raw observations")
+        experiment.add_argument("--allow-game-write", action="store_true",
+                                help="Allow guarded walking or mining orders; default is read-only inspection")
+        if name == "experiment-run":
+            experiment.add_argument("--max-attempts", type=int, default=3,
+                                    help="Stop after this many attempts, from 1 to 5 (default: 3)")
     spherewright = commands.add_parser("spherewright-probe", help="Inspect Spherewright MCP without game writes")
     spherewright.add_argument("--exe", required=True, help="Path to Spherewright.Mcp.exe")
     spherewright.add_argument("--log", help="Optional local stderr log path")
@@ -89,7 +95,9 @@ def main(argv=None):
                                        args.bridge, item_id=args.item_id)
         elif args.command == "operation":
             result = read_operation(args.operation_id, args.bridge)
-        elif args.command == "experiment-once":
+        elif args.command in ("experiment-once", "experiment-run"):
+            if args.command == "experiment-run" and not 1 <= args.max_attempts <= 5:
+                raise ModelPlannerError("--max-attempts must be between 1 and 5")
             allowed = ({"inspect", "inspect_entity", "move", "mine"} if args.allow_game_write
                        else {"inspect", "inspect_entity"})
             data_dir = Path(args.data_dir).resolve()
@@ -103,7 +111,18 @@ def main(argv=None):
             ledger = ExperimentLedger(data_dir / "ledger.sqlite3")
             adapter = BridgeExperimentAdapter(data_dir / "observations", base_url=args.bridge,
                                               max_polls=120, poll_interval=0.5)
-            result = make_bridge_runner(ledger, model, adapter).run_once()
+            runner = make_bridge_runner(ledger, model, adapter)
+            if args.command == "experiment-once":
+                result = runner.run_once()
+            else:
+                attempts = []
+                for _ in range(args.max_attempts):
+                    attempt = runner.run_once()
+                    attempts.append(attempt)
+                    if attempt["verdict"] != "achieved":
+                        break
+                result = {"attempts": attempts, "completed_count": len(attempts),
+                          "stopped_on": attempts[-1]["verdict"]}
         else:
             with StdioMcpClient(args.exe, log_path=args.log) as client:
                 tools = client.list_tools()

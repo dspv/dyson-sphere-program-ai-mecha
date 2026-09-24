@@ -2,6 +2,7 @@
 
 import contextlib
 import io
+import json
 import sys
 import tempfile
 import unittest
@@ -35,6 +36,32 @@ class ExperimentCliTests(unittest.TestCase):
                     self.assertEqual(code, 0)
         self.assertEqual(allowed_sets, [{"inspect", "inspect_entity"},
                                         {"inspect", "inspect_entity", "move", "mine"}])
+
+    def test_bounded_run_stops_after_non_achieved_attempt(self):
+        class FakeModel:
+            def __init__(self, _model, _allowed, **_kwargs):
+                pass
+
+        class FakeRunner:
+            def __init__(self):
+                self.calls = 0
+
+            def run_once(self):
+                self.calls += 1
+                return {"verdict": "achieved" if self.calls == 1 else "partial"}
+
+        runner = FakeRunner()
+        output = io.StringIO()
+        with tempfile.TemporaryDirectory() as directory:
+            with (patch("dsp_agent.__main__.CodexExperimentModel", FakeModel),
+                  patch("dsp_agent.__main__.ExperimentLedger"),
+                  patch("dsp_agent.__main__.BridgeExperimentAdapter"),
+                  patch("dsp_agent.__main__.make_bridge_runner", return_value=runner),
+                  contextlib.redirect_stdout(output)):
+                code = main(["experiment-run", "--data-dir", directory, "--max-attempts", "5"])
+        self.assertEqual(code, 0)
+        self.assertEqual(runner.calls, 2)
+        self.assertEqual(json.loads(output.getvalue())["stopped_on"], "partial")
 
 
 if __name__ == "__main__":
