@@ -72,6 +72,76 @@ namespace DspAgentBridge
             return json.Append('}').ToString();
         }
 
+        internal static string CaptureEntity(string sessionId, int entityId)
+        {
+            var json = new StringBuilder(512);
+            json.Append("{\"protocol_version\":1,\"status\":");
+            var loaded = IsReady();
+            String(json, loaded ? "ok" : "not_loaded");
+            json.Append(",\"session_id\":");
+            NullableString(json, loaded ? sessionId : null);
+            if (!loaded) return json.Append('}').ToString();
+            var planet = GameMain.localPlanet;
+            var factory = planet.factory;
+            json.Append(",\"planet_id\":").Append(planet.id);
+            json.Append(",\"game_tick\":").Append(GameMain.gameTick);
+            json.Append(",\"entity_id\":").Append(entityId);
+            if (factory == null || factory.entityPool == null || entityId >= factory.entityCursor ||
+                entityId >= factory.entityPool.Length || factory.entityPool[entityId].id != entityId)
+            {
+                json.Append(",\"entity\":null}");
+                return json.ToString();
+            }
+            var entity = factory.entityPool[entityId];
+            json.Append(",\"entity\":{\"proto_id\":").Append(entity.protoId);
+            json.Append(",\"position\":");
+            Vector(json, entity.pos);
+            json.Append(",\"assembler\":");
+            var system = factory.factorySystem;
+            var assemblerId = entity.assemblerId;
+            if (system == null || system.assemblerPool == null || assemblerId <= 0 ||
+                assemblerId >= system.assemblerCursor || assemblerId >= system.assemblerPool.Length ||
+                system.assemblerPool[assemblerId].id != assemblerId ||
+                system.assemblerPool[assemblerId].entityId != entityId)
+            {
+                json.Append("null}}");
+                return json.ToString();
+            }
+            var assembler = system.assemblerPool[assemblerId];
+            json.Append("{\"component_id\":").Append(assemblerId);
+            json.Append(",\"recipe_id\":").Append(assembler.recipeId);
+            json.Append(",\"cycle_count\":").Append(assembler.cycleCount);
+            json.Append(",\"extra_cycle_count\":").Append(assembler.extraCycleCount);
+            json.Append(",\"inputs\":[");
+            var recipe = assembler.recipeExecuteData;
+            if (recipe != null && recipe.requires != null && recipe.requireCounts != null &&
+                assembler.served != null && recipe.requires.Length <= 8 &&
+                recipe.requireCounts.Length == recipe.requires.Length && assembler.served.Length == recipe.requires.Length)
+            {
+                for (var i = 0; i < recipe.requires.Length; i++)
+                {
+                    if (i > 0) json.Append(',');
+                    json.Append("{\"item_id\":").Append(recipe.requires[i]);
+                    json.Append(",\"per_cycle\":").Append(recipe.requireCounts[i]);
+                    json.Append(",\"buffered\":").Append(assembler.served[i]).Append('}');
+                }
+            }
+            json.Append("],\"outputs\":[");
+            if (recipe != null && recipe.products != null && recipe.productCounts != null &&
+                assembler.produced != null && recipe.products.Length <= 8 &&
+                recipe.productCounts.Length == recipe.products.Length && assembler.produced.Length == recipe.products.Length)
+            {
+                for (var i = 0; i < recipe.products.Length; i++)
+                {
+                    if (i > 0) json.Append(',');
+                    json.Append("{\"item_id\":").Append(recipe.products[i]);
+                    json.Append(",\"per_cycle\":").Append(recipe.productCounts[i]);
+                    json.Append(",\"buffered\":").Append(assembler.produced[i]).Append('}');
+                }
+            }
+            return json.Append("]}}}").ToString();
+        }
+
         private static void Geo(StringBuilder json, Vector3 position)
         {
             int latDegrees, latMinutes, lonDegrees, lonMinutes;

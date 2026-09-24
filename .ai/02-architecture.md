@@ -22,7 +22,7 @@ The observer's first entity window scans up to 4096 pool indices; a separate `re
 
 The agent also has a bounded read-only MCP stdio client for probing a compatible Spherewright installation. It negotiates MCP `2025-06-18`, lists tools, reads the upstream opening playbook, and calls only an explicit inspection allowlist. The roadmap planner selects a milestone from explicit tri-state evidence. A production verifier requires positive deltas from one game entity's cumulative counter across multiple game-time windows. A Responses API adapter can request one strictly typed proposal from a configured model; its operations are limited to inspection, planning, pausing, or reporting a blocker. The adapter does not execute the proposal or call game write tools. These planning paths have only offline test evidence. The broader construction contract below remains a design target.
 
-An offline reward evaluator scores verified episode outcomes, and a local SQLite strategy memory promotes a candidate only after paired checkpoint trials improve without regression. The [reward and learning policy](../docs/REWARD-LEARNING.md) owns the objective, evidence boundary, and integration sequence. No live game observation feeds this evaluator yet.
+An offline reward evaluator scores verified episode outcomes, and a local SQLite strategy memory promotes a candidate only after paired checkpoint trials improve without regression. One private UI-built line episode was adapted from checked entity windows and scored; no paired live trial or autonomous learning has occurred. The [reward and learning policy](../docs/REWARD-LEARNING.md) owns the objective and evidence boundary.
 
 ## Bridge
 
@@ -32,7 +32,7 @@ Observations use a compact summary plus bounded `inspect_area` and `inspect_enti
 
 ## Agent
 
-The agent keeps a goal, bounded candidate plans, issued action IDs, observations, blockers, and next goal in a local journal. It submits one action or a small dependent group, observes again, and replans on mismatch. The model selects among validated tools; deterministic code owns geometry, placement checks, and retries. Model names and call budgets are configuration, not game logic. Restoring a save invalidates assumed completion until fresh observation confirms it.
+The proposed agent keeps a revisable strategic objective, near-term goal, and tactical experiment with predictions, issued action IDs, observations, blockers, and verified skills or counterexamples in a local journal. It submits one bounded action, observes again, records what changed and why it thinks that happened, and revises its hypothesis on mismatch. The model chooses goals and actions among validated tools; deterministic code owns game-rule checks, geometry, budgets, and evidence. Model names and call budgets are configuration, not game logic. Restoring a save invalidates assumed completion until fresh observation confirms it. A retrieved skill carries prerequisites and past failures; it is rechecked before reuse. The full [experiment contract](../docs/AI-NATIVE-RESEARCH.md#strategy-tactics-and-experiment-contract) is a research design, not an implemented gameplay agent.
 
 ## Wire contract
 
@@ -40,4 +40,4 @@ The target contract uses `protocol_version`, `request_id`, `session_id`, `action
 
 ## Capability sequence
 
-Observation starts with version, planet, position, inventory, and local entities. Then one safe mutation is confirmed. Next comes a deterministic iron line, and only then model-directed construction. Research, mall, travel, logistics, and sphere capabilities follow the [development roadmap](03-roadmap.md) and each needs its own game acceptance result.
+Observation starts with version, planet, position, inventory, and local entities. Walking and bounded mining are confirmed. The UI-built iron line provides a measurement baseline; a bounded ordinary construction surface is still missing. The next research gate is a self-chosen goal and action episode in a copied new game, followed by matched skill-reuse trials. Each later capability needs its own visible game acceptance result; see the [development roadmap](03-roadmap.md).

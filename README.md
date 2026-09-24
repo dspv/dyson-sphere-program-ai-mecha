@@ -1,10 +1,10 @@
 # Dyson Sphere Program AI Mecha
 
-A work-in-progress BepInEx bridge and local agent intended to build and verify factories in a visible Dyson Sphere Program game. The first acceptance target is a sustained iron-ingot line on a prepared ordinary save. The [product contract](.ai/01-product.md) and [roadmap](.ai/03-roadmap.md) define the goal.
+A research project for a self-directed agent that learns reusable gameplay skills in a visible Dyson Sphere Program game. The [AI-native research](docs/AI-NATIVE-RESEARCH.md) defines the experimental approach; the [product contract](.ai/01-product.md) defines the gameplay boundary.
 
 ## Current status
 
-The bridge is compiled and loaded in the Windows DSP client. Stage A observation matched visible UI checks on copied ordinary saves. Stage B issued a guarded walking order through the game's normal order API; the mecha visibly moved to an iron vein, while invalid requests and a paused partial move were reported accurately. In stage C, a bounded normal mining order visibly collected two iron ore on a copied new save. A smelter was placed and built through the ordinary UI on another copy; it had no power or recipe, so this is a construction-path trial rather than a working line. The observer now exposes held items and a bounded recent-entity window for larger factories. Agent-directed construction and factory production are not yet verified. The reward scorer and strategy memory have offline test coverage; no live learning has run. See [build status](.ai/14-build-status.md) and the [reward policy](docs/REWARD-LEARNING.md).
+The bridge is compiled and loaded in the Windows DSP client. Stages A and B have visible checks on copied ordinary saves. An ordinary UI-built iron line produced ingots in two measured game-time windows, but the agent has not built it through bridge commands. Stage C remains partial, and no self-directed gameplay or demonstrated learning has occurred. Research now focuses on a model-chosen goal/experiment loop with verified game feedback and transferable skills. See [build status](.ai/14-build-status.md) and the [reward policy](docs/REWARD-LEARNING.md).
 
 | Track             | Progress |
 | ----------------- | -------- |

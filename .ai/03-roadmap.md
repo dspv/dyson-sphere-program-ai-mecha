@@ -6,8 +6,8 @@ This file owns desired sequence. [Build status](14-build-status.md) says what ex
 
 - **A — observer:** Run a mod in the actual game. Compare API version, planet, position, inventory, and a small local entity area with the visible UI.
 - **B — one action:** Invoke one safe game action through the API. Verify the resulting game state and an invalid request's error.
-- **C — deterministic iron line:** From the prepared save, construct a connected and powered mining-to-smelting line without a model. Verify ore transfer and sustained ingot output. Replaying must not duplicate construction.
-- **D — model control:** Let the model select validated tools for the iron goal, recover from a controlled failure, support pause, and reconcile state after restart.
+- **C — ordinary construction action surface:** Use a copied checkpoint to verify bounded, replay-safe construction and a connected, powered iron line through bridge actions. The existing UI-built line is a measurement baseline, not completion of this stage.
+- **D — self-directed model control:** Let the model select a feasible goal and validated tools on a copied new game, predict and inspect results, recover from a controlled failure, support pause, and reconcile after restart. Compare skill retrieval on matched checkpoint copies and another seed before claiming learning.
 - **E — new save bootstrap:** Obtain blue matrices and complete related research from a new peaceful save through ordinary gathering, crafting, power, and building.
 - **F — mall:** Produce bounded building stocks and demonstrate replenishment after withdrawal.
 - **G — flight:** Scout, travel to a planet in the starting system, obtain titanium, and return with a safe fuel and return plan.
@@ -16,7 +16,7 @@ This file owns desired sequence. [Build status](14-build-status.md) says what ex
 - **J — sphere:** Observe positive progress of a sphere component in the game UI.
 - **K — later progression:** Sustain white matrices and separately verify `Mission Completed!`.
 
-Stages A–D define MVP. For E–K, maintain a feature-to-game-API-to-verification-to-version record in [research](../docs/RESEARCH.md). A blocked flight or construction method stays a blocker; it must not be bypassed by editing the save.
+Stages A–D define the first experimental gate. The [AI-native research](../docs/AI-NATIVE-RESEARCH.md) owns the self-directed trial design. E–K are outcome benchmarks, not a mandatory scripted policy or forced goal order. For each new capability, maintain a feature-to-game-API-to-verification-to-version record in [research](../docs/RESEARCH.md). A blocked flight or construction method stays a blocker; it must not be bypassed by editing the save.
 
 ## Game milestones
 

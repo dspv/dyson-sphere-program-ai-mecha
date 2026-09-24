@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "Agent"))
-from dsp_agent.client import BridgeError, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
+from dsp_agent.client import BridgeError, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -16,7 +16,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if self.path.startswith("/v1/mine-vein?"):
-            self._send({"protocol_version": 1, "operation_id": self.operation_id, "action": "mine", "status": "pending"})
+            item_id = 1002 if "item_id=1002" in self.path else 1001
+            self._send({"protocol_version": 1, "operation_id": self.operation_id, "action": "mine", "item_id": item_id, "status": "pending"})
             return
         if not self.path.startswith("/v1/move-to-vein?"):
             self.send_error(404)
@@ -24,6 +25,10 @@ class Handler(BaseHTTPRequestHandler):
         self._send({"protocol_version": 1, "operation_id": self.operation_id, "status": "pending"})
 
     def do_GET(self):
+        if self.path.startswith("/v1/entity?"):
+            self._send({"protocol_version": 1, "status": "ok", "session_id": "session-a",
+                        "planet_id": 102, "game_tick": 100, "entity_id": 10, "entity": None})
+            return
         if self.path.startswith("/v1/operation?"):
             self._send({"protocol_version": 1, "operation_id": self.operation_id, "status": "partial", "reason": "order_interrupted"})
             return
@@ -107,9 +112,26 @@ class ClientTests(unittest.TestCase):
             session = "fedcba9876543210fedcba9876543210"
             operation_id = Handler.operation_id
             self.assertEqual(request_mine_vein(session, 1, 5, operation_id, base)["status"], "pending")
+            self.assertEqual(request_mine_vein(session, 7, 2, operation_id, base, item_id=1002)["item_id"], 1002)
             for count in (0, 6, True):
                 with self.assertRaises(BridgeError):
                     request_mine_vein(session, 1, count, operation_id, base)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+    def test_exact_entity_read_rejects_bad_identity(self):
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            base = "http://127.0.0.1:" + str(server.server_port)
+            self.assertIsNone(read_entity(10, base)["entity"])
+            with self.assertRaises(BridgeError):
+                read_entity(11, base)
+            with self.assertRaises(BridgeError):
+                read_entity(True, base)
         finally:
             server.shutdown()
             server.server_close()

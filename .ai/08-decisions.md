@@ -66,7 +66,7 @@ An MIT-licensed bridge already exposes guarded, normal-mechanics game actions fo
 
 **Date:** 2026-09-24. **Source:** Windows installation inventory. **Status:** accepted.
 
-The installed game reports `0.10.35.29057` in its version history; released Spherewright 0.3.3 pins `0.10.34.28529` and BepInEx `5.4.17`. The installed BepInEx is `5.4.23.5`. The released compatibility boundary is enough to avoid installing Spherewright for this game. Build and verify the project bridge against the local DLLs, one capability at a time.
+The game reported `0.10.35.29057` at initial inspection and later updated to `0.10.35.29088`; released Spherewright 0.3.3 pins `0.10.34.28529` and BepInEx `5.4.17`. The installed BepInEx is `5.4.23.5`. The released compatibility boundary is enough to avoid installing Spherewright for this game. Build and verify the project bridge against the local DLLs, one capability at a time.
 
 **Rules out:** Treating unreleased Spherewright source as a supported release or probing an unpinned released package in this installation.
 
@@ -117,3 +117,23 @@ The long-term objective is sustained white-matrix throughput under ordinary game
 **Rules out:** Per-item rewards that can be farmed indefinitely, inventory counts as production proof, and strategy promotion from unpaired or unverified episodes.
 
 **Revisit if:** Live episodes show that the policy favors stalled or irrelevant factories, or a different verified objective better captures the owner's goal.
+
+## ADR-013 — Attribute iron output to the checked entity cycle counter
+
+**Date:** 2026-09-24. **Source:** new-game UI line and exact-entity reads. **Status:** accepted for the installed iron recipe only.
+
+Use the installed Arc Smelter's `cycleCount` as the cumulative one-ingot-per-cycle source only when exact entity, recipe 1, ore input 1001, ingot output 1101, and zero extra cycles match. Require the same session, save-copy checkpoint, planet, entity, and item across positive game-time windows, plus visible automated ore-input references. The counter stayed cumulative after withdrawing output and advanced with the visible output in two windows. Keep planet totals and manually mined or hand-fed ore out of automated-output reward proofs. The [research record](../docs/RESEARCH.md) owns the observed values.
+
+**Rules out:** Inferring automated production from inventory growth, a placed smelter, an unpowered machine, or `cycleCount` under an unverified recipe.
+
+**Revisit if:** A recipe change or another installed build changes counter semantics; test before broadening the adapter. One reload on `0.10.35.29088` preserved the counter, but each episode still needs a fresh baseline after load.
+
+## ADR-014 — Make self-directed experiments the agent's learning unit
+
+**Date:** 2026-09-24. **Source:** user direction and [agent research](../docs/AI-NATIVE-RESEARCH.md). **Status:** accepted as a research direction; gameplay unverified.
+
+The model chooses feasible goals, predicts observations, attempts bounded ordinary actions, inspects consequences, and retains verified reusable skills and failures. A deterministic bridge protects game rules and reports evidence; it does not dictate the entire progression route. Evaluate skill reuse on matched copies and another new-game seed before claiming learning. Keep sustained white-matrix throughput as the long-term external objective, with short-term self-chosen goals and bounded progress signals. The earlier deterministic iron line remains an integration baseline, not the agent's mandatory internal policy.
+
+**Rules out:** Equating a hand-scripted factory sequence, a scored offline episode, or prompt/SQLite memory with demonstrated autonomous learning or neural-weight training.
+
+**Revisit if:** Paired live trials show that this loop fails to transfer skills or cannot reach useful ordinary-game actions within its budget.

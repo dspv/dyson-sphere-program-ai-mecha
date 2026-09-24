@@ -10,15 +10,23 @@ class EvidenceError(ValueError):
 @dataclass(frozen=True)
 class ProductionSample:
     session_id: str
+    save_copy_id: str
+    checkpoint_sha256: str
+    game_version: str
     planet_id: int
     entity_id: int
     item_id: int
+    recipe_id: int
     game_tick: int
     produced_total: int
     source: str
 
     def validate(self):
-        if not self.session_id or self.planet_id <= 0 or self.entity_id <= 0 or self.item_id <= 0:
+        if (not self.session_id or not self.save_copy_id or not self.game_version
+                or len(self.checkpoint_sha256) != 64
+                or any(character not in "0123456789abcdef" for character in self.checkpoint_sha256)
+                or self.planet_id <= 0 or self.entity_id <= 0 or self.item_id <= 0
+                or self.recipe_id <= 0):
             raise EvidenceError("production identity is incomplete")
         if self.game_tick < 0 or self.produced_total < 0:
             raise EvidenceError("negative tick or count")
@@ -53,11 +61,15 @@ class ProductionVerifier:
             self.baseline = sample
             self.last = sample
             return self.status()
-        identity = (sample.session_id, sample.planet_id, sample.entity_id, sample.item_id)
-        prior_identity = (self.last.session_id, self.last.planet_id,
-                          self.last.entity_id, self.last.item_id)
+        identity = (sample.session_id, sample.save_copy_id, sample.checkpoint_sha256,
+                    sample.game_version, sample.planet_id, sample.entity_id,
+                    sample.item_id, sample.recipe_id)
+        prior_identity = (self.last.session_id, self.last.save_copy_id,
+                          self.last.checkpoint_sha256, self.last.game_version,
+                          self.last.planet_id, self.last.entity_id,
+                          self.last.item_id, self.last.recipe_id)
         if identity != prior_identity:
-            raise EvidenceError("session, planet, entity, or item changed")
+            raise EvidenceError("production identity changed")
         if sample.game_tick <= self.last.game_tick:
             raise EvidenceError("game tick did not advance")
         if sample.produced_total < self.last.produced_total:

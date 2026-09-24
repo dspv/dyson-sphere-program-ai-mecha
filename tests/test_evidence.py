@@ -6,8 +6,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "Agent"))
 from dsp_agent.evidence import EvidenceError, ProductionSample, ProductionVerifier
 
 
-def sample(tick, total, session="save:load-1", source="game_production_counter"):
-    return ProductionSample(session, 104, 10, 1101, tick, total, source)
+def sample(tick, total, session="save:load-1", source="game_production_counter", copy="trial-a"):
+    return ProductionSample(session, copy, "a" * 64, "0.10.35.29057", 104, 10,
+                            1101, 1, tick, total, source)
 
 
 class ProductionEvidenceTests(unittest.TestCase):
@@ -29,6 +30,8 @@ class ProductionEvidenceTests(unittest.TestCase):
         verifier.observe(sample(0, 5))
         with self.assertRaises(EvidenceError):
             verifier.observe(sample(10, 6, session="save:load-2"))
+        with self.assertRaises(EvidenceError):
+            verifier.observe(sample(10, 6, copy="trial-b"))
         with self.assertRaises(EvidenceError):
             verifier.observe(sample(10, 4))
 

@@ -18,7 +18,7 @@ The current working checkout is in WSL at `/home/ds/dev/dyson-sphere-program-ai-
 
 ## Bootstrap build and smoke check
 
-The plugin exposes `GET /v1/health`, bounded `GET /v1/observe`, `POST /v1/move-to-vein`, `POST /v1/mine-vein`, and `GET /v1/operation`. Stages A and B and one bounded mining trial have visible-game comparisons on copied saves. Observation includes `local_production` with all-time iron ore and ingot totals for the current planet when statistics exist; `null` means the source is unavailable or unregistered. These totals cannot verify one new line in an existing factory. From native PowerShell, build the shared WSL checkout:
+The plugin exposes `GET /v1/health`, bounded `GET /v1/observe`, exact `GET /v1/entity?entity_id=...`, `POST /v1/move-to-vein`, `POST /v1/mine-vein`, and `GET /v1/operation`. Stages A and B, bounded iron/copper mining, and exact iron-smelter reads have visible-game comparisons on copied saves. Observation includes `local_production` with all-time iron ore and ingot totals for the current planet when statistics exist; `null` means the source is unavailable or unregistered. Those totals cannot verify one new line in an existing factory. Exact entity reads provide recipe, cycle count, and buffers, with corrected JSON parsed through native PowerShell after the plugin restart. From native PowerShell, build the shared WSL checkout:
 
 `inventory` lists package slots; `inhand_item` separately reports the selected cursor stack during construction mode. `nearby_entities` scans the first 4096 pool indices, while `recent_entities` scans at most the last 1024 newest-first and reports its exact indices. Check both windows and their truncation flags before concluding that an entity is absent. A copied-save UI trial placed one Arc Smelter but found it unpowered and without a recipe; this is not a bridge construction capability.
 
@@ -29,7 +29,7 @@ Set-Location -LiteralPath $repo
 & "$env:USERPROFILE\.dotnet\dotnet.exe" build src\DspAgentBridge\DspAgentBridge.csproj "-p:GameManagedDir=$game\DSPGAME_Data\Managed" "-p:BepInExCoreDir=$game\BepInEx\core"
 ```
 
-Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `$game\BepInEx\plugins\DspAgentBridge\`. Start DSP through Steam with `Start-Process 'C:\Program Files (x86)\Steam\steam.exe' -ArgumentList '-applaunch 1366540'`; launching `DSPGAME.exe` directly failed Steam initialization in this environment. Check the BepInEx log for `Loading [DSP Agent Bridge 0.4.1]`. Query from **native PowerShell**: `Invoke-RestMethod http://127.0.0.1:38741/v1/health` and `Invoke-RestMethod http://127.0.0.1:38741/v1/observe`. WSL's own loopback did not reach the Windows listener. Native Windows Python can also run `python -m dsp_agent observe` with `PYTHONPATH` set to the checkout's `src\Agent` directory. Health status `stage_c_experimental` names the current scope; it is not a claim that the iron line works. A `not_loaded` observation is expected at the menu. `embedded_save_name` is not a reliable loaded filename.
+Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `$game\BepInEx\plugins\DspAgentBridge\`. Start DSP through Steam with `Start-Process 'C:\Program Files (x86)\Steam\steam.exe' -ArgumentList '-applaunch 1366540'`; launching `DSPGAME.exe` directly failed Steam initialization in this environment. Check the BepInEx log for `Loading [DSP Agent Bridge 0.5.0]`. Query from **native PowerShell**: `Invoke-RestMethod http://127.0.0.1:38741/v1/health`, `Invoke-RestMethod http://127.0.0.1:38741/v1/observe`, and `Invoke-RestMethod 'http://127.0.0.1:38741/v1/entity?entity_id=3'` when exact entity 3 is known in the current session. WSL's own loopback did not reach the Windows listener. Native Windows Python can also run `python -m dsp_agent observe` or `python -m dsp_agent entity --entity-id 3` with `PYTHONPATH` set to the checkout's `src\Agent` directory. Health status `stage_c_experimental` names the current scope; it is not a claim that autonomous construction works. A `not_loaded` observation is expected at the menu. `embedded_save_name` is not a reliable loaded filename.
 
 ## Guarded walking trial
 
@@ -50,7 +50,7 @@ On a copied ordinary save, read the fresh session and an iron vein ID with `type
 
 ## Optional Spherewright read-only probe
 
-The installed DSP `0.10.35.29057` is outside released Spherewright 0.3.3's pinned `0.10.34.28529` support. The package is not installed. If a later release explicitly supports this build, follow its own instructions and run its MCP executable from the extracted package. The [research record](RESEARCH.md) owns the compatibility finding. Run this from the repository root in PowerShell after launching the copied save:
+The installed DSP `0.10.35.29088` is outside released Spherewright 0.3.3's pinned `0.10.34.28529` support. The package is not installed. If a later release explicitly supports this build, follow its own instructions and run its MCP executable from the extracted package. The [research record](RESEARCH.md) owns the compatibility finding. Run this from the repository root in PowerShell after launching the copied save:
 
 ```powershell
 $env:PYTHONPATH = 'src\Agent'

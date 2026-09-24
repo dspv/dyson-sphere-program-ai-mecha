@@ -22,15 +22,17 @@ Unknowns live here until evidence or an ADR closes them. A target in the [roadma
 
 ## Open questions
 
-- **`OQ-02` — Behavior of installed building signatures:** Stage A reads, stage B walking, and bounded iron mining have copied-save UI comparisons. The ordinary UI built one smelter after a valid preview and deducted one item, but bridge-directed construction and its game API signatures remain unverified. Blocks completion of stage C.
-- **`OQ-03` — Prepared inventory and technologies for the iron experiment:** A pristine ordinary seed `33434023` save exists, but it has no starting items. Obtain needed materials through ordinary gameplay or document a separately prepared ordinary save. Blocks the iron acceptance run.
+- **`OQ-02` — Behavior of installed building signatures:** Ordinary UI construction produced a physical iron line, but bridge-directed placement, belt routing, sorter endpoints, and replay-safe construction are still unverified. Inspect and test the installed build-tool path on a copied checkpoint. Blocks autonomous stage C.
+- **`OQ-03` — Reproducible ordinary bootstrap:** A pristine ordinary seed `33434023` save and a later iron-line checkpoint exist. Mining, crafting, and research were performed through normal gameplay, but their complete action sequence is not yet programmatically reproducible. Blocks autonomous new-save progression.
 - **`OQ-04` — Sustained output window and minimum rate:** Decided from a target set for the experiment and game measurement. Blocks final milestone judgment, not instrumentation.
 - **`OQ-05` — Model/API budget and credentials:** Decided by the owner before enabling paid planning calls. Blocks stage D, not deterministic stages.
 
-- **`OQ-07` — Production counter source:** Local-planet ore and ingot totals now match the visible statistics panel, but include all existing factory production on that planet. A candidate assembler cycle count has not been checked against the visible UI and is excluded from the bridge response. Find a cumulative counter for the exact iron smelter and output item, compare it against the visible UI across save and session changes, and observe connected ore flow. Blocks automated production acceptance.
+- **`OQ-07` — Counter behavior after a recipe change:** The exact Arc Smelter iron cycle counter matched visible ingot output across two windows, output withdrawal, and one checkpoint reload after the game update. Recipe-switch behavior remains unknown. Keep the adapter restricted to the checked recipe and require a fresh baseline after each load.
 - **`OQ-09` — Reliable loaded-file identity:** `GameMain.gameName` is an embedded label and retained the pristine name after loading a renamed copy. No verified installed API reports the physical loaded filename. Stage B actions must require a fresh session and user-designated experiment context without treating the embedded name as proof of file identity.
 - **`OQ-10` — Operation identity after restart:** Stage B's movement operation cache is bounded and in memory. A restart loses it, so the local journal and fresh world observation must reconcile any unresolved action before retry. Stage C construction needs stronger duplicate prevention across restarts.
-- **`OQ-11` — Live reward evidence and policy calibration:** The offline evaluator has no adapter to verified entity-level production windows or complete game episodes. Check attribution, session identity, game-time windows, reward gaming, and policy weights on copied saves before automatic strategy promotion is enabled.
+- **`OQ-11` — Paired live strategy learning:** One private UI-built iron-line episode was scored from exact entity windows, and its two progress points did not promote a strategy. Baseline and changed strategies have not been run on matched checkpoint copies. Complete the configured paired trials, inspect score components and regressions, and test policy gaming before enabling promotion.
+
+- **`OQ-12` — AI-native action and transfer test:** A model has not chosen or executed a gameplay goal in DSP. The bridge has no ordinary construction command. Test a bounded construction surface, then compare model-chosen experiments with and without retrieved skills on matched copies and another seed. The design is in [AI-native research](../docs/AI-NATIVE-RESEARCH.md).
 
 ## What would falsify the plan
 

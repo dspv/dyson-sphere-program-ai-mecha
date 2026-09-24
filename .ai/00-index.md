@@ -12,11 +12,11 @@ The project aims to let a local agent plan and verify actions in a visible Dyson
 | [12-risks.md](12-risks.md)               | Assumptions and open questions  | Expanding scope       |
 | [14-build-status.md](14-build-status.md) | Current implementation          | Checking actual state |
 
-Supporting documents: [research](../docs/RESEARCH.md) owns external API findings; [runbook](../docs/RUNBOOK.md) owns installation and operation; [strategies](../docs/STRATEGIES.md) owns tested gameplay heuristics; [reward and learning](../docs/REWARD-LEARNING.md) owns the offline scoring policy and eventual optimization target.
+Supporting documents: [research](../docs/RESEARCH.md) owns game API findings; [AI-native research](../docs/AI-NATIVE-RESEARCH.md) compares agent approaches and owns the first self-directed experiment; [runbook](../docs/RUNBOOK.md) owns installation and operation; [strategies](../docs/STRATEGIES.md) owns tested gameplay heuristics; [reward and learning](../docs/REWARD-LEARNING.md) owns the offline scoring policy and eventual optimization target.
 
 ## Current state
 
-**Last updated: 2026-09-24. Phase: stage C partial implementation.** The project bridge builds against the local Mono game and BepInEx DLLs and has visibly verified stages A and B on copied ordinary saves. The observer reports bounded partial scans, a recent-entity window, held items, and UI-matched local-planet production totals; guarded walking and a two-ore normal mining order have visible-game checks. A single smelter was placed and built through the ordinary game UI on a copied save, but bridge-directed construction and agent-made factory production remain unverified. An offline reward scorer and strategy memory exist; live learning has not run. The exact next action and evidence are in [14-build-status.md](14-build-status.md).
+**Last updated: 2026-09-24. Phase: stage C partial implementation and AI-native research pivot.** The project bridge builds against the local Mono game and BepInEx DLLs and has visibly verified stages A and B on copied ordinary saves. On a copy of a new ordinary game, an ordinary UI-built miner, belt, powered sorter, and smelter produced iron ingots over two measured game-time windows; the exact entity counter and visible panel agreed. Bridge-directed construction and self-directed gameplay remain unverified. One private episode was scored, but there are no paired strategy trials or demonstrated learning. The [AI-native research](../docs/AI-NATIVE-RESEARCH.md) defines the new experimental direction; the exact evidence is in [14-build-status.md](14-build-status.md).
 
 ## Rules of engagement
 

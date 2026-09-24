@@ -4,15 +4,15 @@ This file owns product scope and promises. [Architecture](02-architecture.md) ow
 
 ## One-liner
 
-A local agent observes and acts in a visible Dyson Sphere Program game through a limited BepInEx bridge, then verifies its goals from game measurements.
+A self-directed local agent learns reusable ordinary-game skills in a visible Dyson Sphere Program client, using bounded actions and game measurements to check its own goals.
 
 ## Core loop
 
 ```text
-visible game → bounded snapshot → goal and plan → dry-run check → one action → observed result → journal → repeat
+visible game → bounded snapshot → self-chosen feasible goal and prediction → one bounded action → observed result → verified skill or counterexample → repeat
 ```
 
-The user watches the game and can pause or stop the agent. The developer agent, in-game AI agent, and bridge are distinct components.
+The user watches the game and can pause or stop the agent. The developer agent, in-game AI agent, and bridge are distinct components. The [AI-native research](../docs/AI-NATIVE-RESEARCH.md) owns the experimental learning loop.
 
 ## First acceptance target
 

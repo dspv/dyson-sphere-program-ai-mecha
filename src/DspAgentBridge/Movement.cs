@@ -23,6 +23,7 @@ namespace DspAgentBridge
             public int VeinId;
             public string Kind = "move";
             public int RequestedCount;
+            public int ItemId;
             public int StartInventory;
             public int CurrentInventory;
             public int StartVeinAmount;
@@ -43,12 +44,12 @@ namespace DspAgentBridge
             return EnqueueAction(operationId, sessionId, veinId, "move", 0);
         }
 
-        internal string EnqueueMine(string operationId, string sessionId, int veinId, int count)
+        internal string EnqueueMine(string operationId, string sessionId, int veinId, int count, int itemId)
         {
-            return EnqueueAction(operationId, sessionId, veinId, "mine", count);
+            return EnqueueAction(operationId, sessionId, veinId, "mine", count, itemId);
         }
 
-        private string EnqueueAction(string operationId, string sessionId, int veinId, string kind, int count)
+        private string EnqueueAction(string operationId, string sessionId, int veinId, string kind, int count, int itemId = 0)
         {
             lock (gate)
             {
@@ -56,14 +57,14 @@ namespace DspAgentBridge
                 if (operations.TryGetValue(operationId, out existing))
                 {
                     if (existing.SessionId != sessionId || existing.VeinId != veinId ||
-                        existing.Kind != kind || existing.RequestedCount != count)
+                        existing.Kind != kind || existing.RequestedCount != count || existing.ItemId != itemId)
                         return Error("operation_conflict");
                     return Snapshot(existing);
                 }
                 if (active != null) return Error("operation_in_progress");
                 if (operations.Count >= MaxOperations) return Error("operation_limit");
                 var operation = new MoveOperation { Id = operationId, SessionId = sessionId, VeinId = veinId,
-                    Kind = kind, RequestedCount = count };
+                    Kind = kind, RequestedCount = count, ItemId = itemId };
                 operations.Add(operationId, operation);
                 active = operation;
                 return Snapshot(operation);
@@ -102,7 +103,7 @@ namespace DspAgentBridge
                 if (operation.Kind == "mine")
                 {
                     var factory = GameMain.localPlanet.factory;
-                    operation.CurrentInventory = CountItem(player.package, 1001);
+                    operation.CurrentInventory = CountItem(player.package, operation.ItemId);
                     operation.CurrentVeinAmount = factory != null && factory.veinPool != null &&
                         operation.VeinId < factory.veinPool.Length && factory.veinPool[operation.VeinId].id == operation.VeinId
                         ? factory.veinPool[operation.VeinId].amount : 0;
@@ -176,7 +177,8 @@ namespace DspAgentBridge
                 Finish(operation, "rejected", "target_out_of_range");
                 return;
             }
-            if (operation.Kind == "mine" && (vein.type != EVeinType.Iron || vein.productId != 1001 ||
+            if (operation.Kind == "mine" && ((vein.type != EVeinType.Iron && vein.type != EVeinType.Copper) ||
+                vein.productId != operation.ItemId ||
                 GameMain.data.gameDesc.isInfiniteResource || !HasEmptySlot(player.package)))
             {
                 Finish(operation, "rejected", "invalid_mining_target_or_inventory");
@@ -199,7 +201,7 @@ namespace DspAgentBridge
             operation.Target = vein.pos;
             if (operation.Kind == "mine")
             {
-                operation.StartInventory = CountItem(player.package, 1001);
+                operation.StartInventory = CountItem(player.package, operation.ItemId);
                 operation.CurrentInventory = operation.StartInventory;
                 operation.StartVeinAmount = vein.amount;
                 operation.CurrentVeinAmount = vein.amount;
@@ -252,6 +254,7 @@ namespace DspAgentBridge
             json.Append(",\"action\":\"").Append(operation.Kind).Append('"');
             if (operation.Kind == "mine")
             {
+                json.Append(",\"item_id\":").Append(operation.ItemId);
                 json.Append(",\"requested_count\":").Append(operation.RequestedCount);
                 json.Append(",\"inventory_before\":").Append(operation.StartedTick > 0 ? operation.StartInventory.ToString() : "null");
                 json.Append(",\"inventory_now\":").Append(operation.StartedTick > 0 ? operation.CurrentInventory.ToString() : "null");

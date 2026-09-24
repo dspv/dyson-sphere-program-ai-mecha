@@ -3,7 +3,7 @@
 import argparse
 import json
 import sys
-from .client import BridgeError, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
+from .client import BridgeError, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
 from .mcp_stdio import McpError, StdioMcpClient
 
 
@@ -14,16 +14,20 @@ def main(argv=None):
     health.add_argument("--bridge", default="http://127.0.0.1:38741")
     observe = commands.add_parser("observe", help="Read bounded game observation")
     observe.add_argument("--bridge", default="http://127.0.0.1:38741")
+    entity = commands.add_parser("entity", help="Read one exact game entity and its assembler state")
+    entity.add_argument("--bridge", default="http://127.0.0.1:38741")
+    entity.add_argument("--entity-id", type=int, required=True)
     move = commands.add_parser("move-to-vein", help="Order a walking mecha to one nearby vein")
     move.add_argument("--bridge", default="http://127.0.0.1:38741")
     move.add_argument("--session-id", required=True)
     move.add_argument("--vein-id", type=int, required=True)
     move.add_argument("--operation-id", required=True, help="Stable UUID hex; reuse only to poll the same request")
-    mine = commands.add_parser("mine-vein", help="Mine at most five iron ore through a normal order")
+    mine = commands.add_parser("mine-vein", help="Mine at most five iron or copper ore through a normal order")
     mine.add_argument("--bridge", default="http://127.0.0.1:38741")
     mine.add_argument("--session-id", required=True)
     mine.add_argument("--vein-id", type=int, required=True)
     mine.add_argument("--count", type=int, required=True)
+    mine.add_argument("--item-id", type=int, choices=(1001, 1002), default=1001)
     mine.add_argument("--operation-id", required=True, help="Stable UUID hex; reuse only to poll the same request")
     operation = commands.add_parser("operation", help="Read a movement result without retrying it")
     operation.add_argument("--bridge", default="http://127.0.0.1:38741")
@@ -37,10 +41,13 @@ def main(argv=None):
             result = read_health(args.bridge if args.command else "http://127.0.0.1:38741")
         elif args.command == "observe":
             result = read_observation(args.bridge)
+        elif args.command == "entity":
+            result = read_entity(args.entity_id, args.bridge)
         elif args.command == "move-to-vein":
             result = request_move_to_vein(args.session_id, args.vein_id, args.operation_id, args.bridge)
         elif args.command == "mine-vein":
-            result = request_mine_vein(args.session_id, args.vein_id, args.count, args.operation_id, args.bridge)
+            result = request_mine_vein(args.session_id, args.vein_id, args.count, args.operation_id,
+                                       args.bridge, item_id=args.item_id)
         elif args.command == "operation":
             result = read_operation(args.operation_id, args.bridge)
         else:

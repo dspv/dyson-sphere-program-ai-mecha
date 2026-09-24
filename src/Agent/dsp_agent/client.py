@@ -68,16 +68,23 @@ def request_move_to_vein(session_id, vein_id, operation_id, base_url="http://127
     return payload
 
 
-def request_mine_vein(session_id, vein_id, count, operation_id, base_url="http://127.0.0.1:38741", timeout=3):
+def request_mine_vein(session_id, vein_id, count, operation_id, base_url="http://127.0.0.1:38741", timeout=3, *, item_id=1001):
     _operation_id(operation_id)
     _operation_id(session_id)
     if isinstance(vein_id, bool) or not isinstance(vein_id, int) or vein_id <= 0:
         raise BridgeError("vein ID must be a positive integer")
     if isinstance(count, bool) or not isinstance(count, int) or count < 1 or count > 5:
         raise BridgeError("mining count must be between 1 and 5")
-    query = parse.urlencode({"operation_id": operation_id, "session_id": session_id, "vein_id": vein_id, "count": count})
+    if item_id not in (1001, 1002) or isinstance(item_id, bool):
+        raise BridgeError("only iron and copper ore are supported")
+    parameters = {"operation_id": operation_id, "session_id": session_id, "vein_id": vein_id, "count": count}
+    if item_id != 1001:
+        parameters["item_id"] = item_id
+    query = parse.urlencode(parameters)
     payload = _request(base_url, "/v1/mine-vein?" + query, timeout, 8192, "POST")
-    if payload.get("operation_id") != operation_id or payload.get("action") != "mine" or payload.get("status") not in ("pending", "running", "completed", "partial", "rejected"):
+    if (payload.get("operation_id") != operation_id or payload.get("action") != "mine"
+            or payload.get("item_id") != item_id
+            or payload.get("status") not in ("pending", "running", "completed", "partial", "rejected")):
         raise BridgeError("invalid mining response")
     return payload
 
@@ -104,4 +111,22 @@ def read_observation(base_url="http://127.0.0.1:38741", timeout=3):
             value = payload.get(key)
             if value is not None and not isinstance(value, dict):
                 raise BridgeError("invalid " + key)
+    return payload
+
+
+def read_entity(entity_id, base_url="http://127.0.0.1:38741", timeout=3):
+    if isinstance(entity_id, bool) or not isinstance(entity_id, int) or entity_id <= 0:
+        raise BridgeError("entity ID must be a positive integer")
+    query = parse.urlencode({"entity_id": entity_id})
+    payload = _read(base_url, "/v1/entity?" + query, timeout, 8192)
+    if payload.get("status") not in ("ok", "not_loaded"):
+        raise BridgeError("entity read failed: " + str(payload.get("error", "unknown")))
+    if payload["status"] == "ok":
+        if (payload.get("entity_id") != entity_id or not isinstance(payload.get("session_id"), str)
+                or isinstance(payload.get("planet_id"), bool) or not isinstance(payload.get("planet_id"), int)
+                or isinstance(payload.get("game_tick"), bool) or not isinstance(payload.get("game_tick"), int)):
+            raise BridgeError("invalid entity identity")
+        entity = payload.get("entity")
+        if entity is not None and not isinstance(entity, dict):
+            raise BridgeError("invalid entity data")
     return payload
