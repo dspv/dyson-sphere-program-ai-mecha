@@ -12,6 +12,8 @@ namespace DspAgentBridge
         private const int MaxInventorySlots = 256;
         private const int MaxEntityScan = 4096;
         private const int MaxNearbyEntities = 64;
+        private const int MaxRecentEntityScan = 1024;
+        private const int MaxRecentEntities = 32;
         private const int MaxVeinScan = 4096;
         private const int MaxNearbyVeins = 64;
         private const float NearbyRadius = 25f;
@@ -62,7 +64,9 @@ namespace DspAgentBridge
             if (planet == null || player.planetId != planet.id) json.Append("null");
             else Geo(json, player.position);
             Inventory(json, player.package);
+            Inhand(json, player);
             NearbyEntities(json, planet, player);
+            RecentEntities(json, planet, player);
             NearbyVeins(json, planet, player);
             ProductionTotals(json, planet);
             return json.Append('}').ToString();
@@ -116,6 +120,18 @@ namespace DspAgentBridge
             json.Append("]}");
         }
 
+        private static void Inhand(StringBuilder json, Player player)
+        {
+            json.Append(",\"inhand_item\":");
+            if (player.inhandItemId <= 0 || player.inhandItemCount <= 0)
+            {
+                json.Append("null");
+                return;
+            }
+            json.Append("{\"item_id\":").Append(player.inhandItemId);
+            json.Append(",\"count\":").Append(player.inhandItemCount).Append('}');
+        }
+
         private static void NearbyEntities(StringBuilder json, PlanetData planet, Player player)
         {
             json.Append(",\"nearby_entities\":");
@@ -146,6 +162,47 @@ namespace DspAgentBridge
                 }
                 if (!first) json.Append(',');
                 first = false;
+                json.Append("{\"id\":").Append(entity.id);
+                json.Append(",\"proto_id\":").Append(entity.protoId);
+                json.Append(",\"position\":");
+                Vector(json, entity.pos);
+                json.Append('}');
+                found++;
+            }
+            json.Append("],\"result_truncated\":false}");
+        }
+
+        private static void RecentEntities(StringBuilder json, PlanetData planet, Player player)
+        {
+            json.Append(",\"recent_entities\":");
+            if (planet == null || player.planetId != planet.id || !planet.factoryLoaded ||
+                planet.factory == null || planet.factory.entityPool == null)
+            {
+                json.Append("null");
+                return;
+            }
+            var factory = planet.factory;
+            var scanEnd = Math.Min(factory.entityCursor, factory.entityPool.Length);
+            var scanStart = Math.Max(1, scanEnd - MaxRecentEntityScan);
+            var radiusSquared = NearbyRadius * NearbyRadius;
+            var center = player.position;
+            json.Append("{\"radius\":").Append(Number(NearbyRadius));
+            json.Append(",\"scan_start\":").Append(scanStart);
+            json.Append(",\"scan_end_exclusive\":").Append(scanEnd);
+            json.Append(",\"covers_entire_pool\":").Append(scanStart == 1 && factory.entityCursor <= scanEnd ? "true" : "false");
+            json.Append(",\"entities\":[");
+            var found = 0;
+            // Newest first keeps a just-built entity visible under the result cap.
+            for (var i = scanEnd - 1; i >= scanStart; i--)
+            {
+                var entity = factory.entityPool[i];
+                if (entity.id != i || (entity.pos - center).sqrMagnitude > radiusSquared) continue;
+                if (found == MaxRecentEntities)
+                {
+                    json.Append("],\"result_truncated\":true}");
+                    return;
+                }
+                if (found > 0) json.Append(',');
                 json.Append("{\"id\":").Append(entity.id);
                 json.Append(",\"proto_id\":").Append(entity.protoId);
                 json.Append(",\"position\":");

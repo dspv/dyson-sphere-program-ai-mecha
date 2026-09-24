@@ -7,7 +7,7 @@ using BepInEx;
 
 namespace DspAgentBridge
 {
-    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.4.0")]
+    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.4.1")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private HttpListener listener;
@@ -97,7 +97,7 @@ namespace DspAgentBridge
             response.Headers.Add("Cache-Control", "no-store");
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/health")
             {
-                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.4.0\",\"status\":\"stage_c_experimental\"}");
+                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.4.1\",\"status\":\"stage_c_experimental\"}");
                 return;
             }
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/observe")

@@ -16,7 +16,7 @@ Supporting documents: [research](../docs/RESEARCH.md) owns external API findings
 
 ## Current state
 
-**Last updated: 2026-09-24. Phase: stage C partial implementation.** The project bridge builds against the local Mono game and BepInEx DLLs and has visibly verified stages A and B on copied ordinary saves. The observer reports bounded partial scans and UI-matched local-planet production totals; guarded walking and a two-ore normal mining order have visible-game checks. Construction and agent-made factory production remain unverified. The exact next action and evidence are in [14-build-status.md](14-build-status.md).
+**Last updated: 2026-09-24. Phase: stage C partial implementation.** The project bridge builds against the local Mono game and BepInEx DLLs and has visibly verified stages A and B on copied ordinary saves. The observer reports bounded partial scans, a recent-entity window, held items, and UI-matched local-planet production totals; guarded walking and a two-ore normal mining order have visible-game checks. A single smelter was placed and built through the ordinary game UI on a copied save, but bridge-directed construction and agent-made factory production remain unverified. The exact next action and evidence are in [14-build-status.md](14-build-status.md).
 
 ## Rules of engagement
 

@@ -22,7 +22,7 @@ Unknowns live here until evidence or an ADR closes them. A target in the [roadma
 
 ## Open questions
 
-- **`OQ-02` — Behavior of installed building signatures:** Stage A reads, stage B walking, and a bounded stage C iron-mining order have copied-save UI comparisons. Construction signatures remain unverified. Blocks completion of stage C.
+- **`OQ-02` — Behavior of installed building signatures:** Stage A reads, stage B walking, and bounded iron mining have copied-save UI comparisons. The ordinary UI built one smelter after a valid preview and deducted one item, but bridge-directed construction and its game API signatures remain unverified. Blocks completion of stage C.
 - **`OQ-03` — Prepared inventory and technologies for the iron experiment:** A pristine ordinary seed `33434023` save exists, but it has no starting items. Obtain needed materials through ordinary gameplay or document a separately prepared ordinary save. Blocks the iron acceptance run.
 - **`OQ-04` — Sustained output window and minimum rate:** Decided from a target set for the experiment and game measurement. Blocks final milestone judgment, not instrumentation.
 - **`OQ-05` — Model/API budget and credentials:** Decided by the owner before enabling paid planning calls. Blocks stage D, not deterministic stages.

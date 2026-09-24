@@ -20,6 +20,8 @@ The current working checkout is in WSL at `/home/ds/dev/dyson-sphere-program-ai-
 
 The plugin exposes `GET /v1/health`, bounded `GET /v1/observe`, `POST /v1/move-to-vein`, `POST /v1/mine-vein`, and `GET /v1/operation`. Stages A and B and one bounded mining trial have visible-game comparisons on copied saves. Observation includes `local_production` with all-time iron ore and ingot totals for the current planet when statistics exist; `null` means the source is unavailable or unregistered. These totals cannot verify one new line in an existing factory. From native PowerShell, build the shared WSL checkout:
 
+`inventory` lists package slots; `inhand_item` separately reports the selected cursor stack during construction mode. `nearby_entities` scans the first 4096 pool indices, while `recent_entities` scans at most the last 1024 newest-first and reports its exact indices. Check both windows and their truncation flags before concluding that an entity is absent. A copied-save UI trial placed one Arc Smelter but found it unpowered and without a recipe; this is not a bridge construction capability.
+
 ```powershell
 $repo = '\\wsl.localhost\Ubuntu\home\ds\dev\dyson-sphere-program-ai-mecha'
 $game = 'C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program'
@@ -27,7 +29,7 @@ Set-Location -LiteralPath $repo
 & "$env:USERPROFILE\.dotnet\dotnet.exe" build src\DspAgentBridge\DspAgentBridge.csproj "-p:GameManagedDir=$game\DSPGAME_Data\Managed" "-p:BepInExCoreDir=$game\BepInEx\core"
 ```
 
-Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `$game\BepInEx\plugins\DspAgentBridge\`. Start DSP through Steam with `Start-Process 'C:\Program Files (x86)\Steam\steam.exe' -ArgumentList '-applaunch 1366540'`; launching `DSPGAME.exe` directly failed Steam initialization in this environment. Check the BepInEx log for `Loading [DSP Agent Bridge 0.4.0]`. Query from **native PowerShell**: `Invoke-RestMethod http://127.0.0.1:38741/v1/health` and `Invoke-RestMethod http://127.0.0.1:38741/v1/observe`. WSL's own loopback did not reach the Windows listener. Native Windows Python can also run `python -m dsp_agent observe` with `PYTHONPATH` set to the checkout's `src\Agent` directory. Health status `stage_c_experimental` names the current scope; it is not a claim that the iron line works. A `not_loaded` observation is expected at the menu. `embedded_save_name` is not a reliable loaded filename.
+Copy `src/DspAgentBridge/bin/Debug/net472/DspAgentBridge.dll` to `$game\BepInEx\plugins\DspAgentBridge\`. Start DSP through Steam with `Start-Process 'C:\Program Files (x86)\Steam\steam.exe' -ArgumentList '-applaunch 1366540'`; launching `DSPGAME.exe` directly failed Steam initialization in this environment. Check the BepInEx log for `Loading [DSP Agent Bridge 0.4.1]`. Query from **native PowerShell**: `Invoke-RestMethod http://127.0.0.1:38741/v1/health` and `Invoke-RestMethod http://127.0.0.1:38741/v1/observe`. WSL's own loopback did not reach the Windows listener. Native Windows Python can also run `python -m dsp_agent observe` with `PYTHONPATH` set to the checkout's `src\Agent` directory. Health status `stage_c_experimental` names the current scope; it is not a claim that the iron line works. A `not_loaded` observation is expected at the menu. `embedded_save_name` is not a reliable loaded filename.
 
 ## Guarded walking trial
 

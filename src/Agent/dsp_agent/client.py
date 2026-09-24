@@ -100,7 +100,7 @@ def read_observation(base_url="http://127.0.0.1:38741", timeout=3):
     if payload["status"] == "ok":
         if not isinstance(payload.get("session_id"), str) or not isinstance(payload.get("game_tick"), int):
             raise BridgeError("missing loaded session identity")
-        for key in ("inventory", "nearby_entities", "nearby_veins"):
+        for key in ("inventory", "nearby_entities", "recent_entities", "nearby_veins"):
             value = payload.get(key)
             if value is not None and not isinstance(value, dict):
                 raise BridgeError("invalid " + key)
