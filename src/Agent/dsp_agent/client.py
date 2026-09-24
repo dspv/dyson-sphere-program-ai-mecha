@@ -130,3 +130,29 @@ def read_entity(entity_id, base_url="http://127.0.0.1:38741", timeout=3):
         if entity is not None and not isinstance(entity, dict):
             raise BridgeError("invalid entity data")
     return payload
+
+
+def read_build_preview(base_url="http://127.0.0.1:38741", timeout=3):
+    payload = _read(base_url, "/v1/build-preview", timeout, 4096)
+    if payload.get("status") not in ("ok", "not_loaded"):
+        raise BridgeError("build preview read failed: " + str(payload.get("error", "unknown")))
+    if payload["status"] == "ok":
+        count = payload.get("preview_count")
+        if (not isinstance(payload.get("session_id"), str)
+                or isinstance(payload.get("planet_id"), bool) or not isinstance(payload.get("planet_id"), int)
+                or isinstance(payload.get("game_tick"), bool) or not isinstance(payload.get("game_tick"), int)
+                or not isinstance(payload.get("active"), bool)
+                or isinstance(count, bool) or not isinstance(count, int) or count < 0):
+            raise BridgeError("invalid build preview identity")
+        preview = payload.get("single_preview")
+        if (preview is not None and (count != 1 or not payload["active"] or not isinstance(preview, dict)
+                or isinstance(preview.get("item_id"), bool)
+                or (preview.get("item_id") is not None and
+                    (not isinstance(preview["item_id"], int) or preview["item_id"] <= 0))
+                or not isinstance(preview.get("position"), dict)
+                or not isinstance(preview.get("condition"), str)
+                or isinstance(preview.get("cover_object_id"), bool)
+                or not isinstance(preview.get("cover_object_id"), int)
+                or not isinstance(preview.get("connection_node"), bool))):
+            raise BridgeError("invalid single build preview")
+    return payload

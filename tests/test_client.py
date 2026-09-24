@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "Agent"))
-from dsp_agent.client import BridgeError, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
+from dsp_agent.client import BridgeError, read_build_preview, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -25,6 +25,13 @@ class Handler(BaseHTTPRequestHandler):
         self._send({"protocol_version": 1, "operation_id": self.operation_id, "status": "pending"})
 
     def do_GET(self):
+        if self.path == "/v1/build-preview":
+            self._send({"protocol_version": 1, "status": "ok", "session_id": "session-a",
+                        "planet_id": 102, "game_tick": 100, "active": True, "preview_count": 1,
+                        "single_preview": {"item_id": 2302, "position": {"x": 1, "y": 2, "z": 3},
+                                           "condition": "Ok", "cover_object_id": 0,
+                                           "connection_node": False}})
+            return
         if self.path.startswith("/v1/entity?"):
             self._send({"protocol_version": 1, "status": "ok", "session_id": "session-a",
                         "planet_id": 102, "game_tick": 100, "entity_id": 10, "entity": None})
@@ -132,6 +139,18 @@ class ClientTests(unittest.TestCase):
                 read_entity(11, base)
             with self.assertRaises(BridgeError):
                 read_entity(True, base)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+    def test_build_preview_read_is_bounded_and_typed(self):
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            base = "http://127.0.0.1:" + str(server.server_port)
+            self.assertEqual(read_build_preview(base)["single_preview"]["item_id"], 2302)
         finally:
             server.shutdown()
             server.server_close()

@@ -142,6 +142,42 @@ namespace DspAgentBridge
             return json.Append("]}}}").ToString();
         }
 
+        internal static string CaptureBuildPreview(string sessionId)
+        {
+            var json = new StringBuilder(384);
+            var loaded = IsReady();
+            json.Append("{\"protocol_version\":1,\"status\":");
+            String(json, loaded ? "ok" : "not_loaded");
+            json.Append(",\"session_id\":");
+            NullableString(json, loaded ? sessionId : null);
+            if (!loaded) return json.Append('}').ToString();
+
+            var player = GameMain.mainPlayer;
+            var action = player.controller != null ? player.controller.actionBuild : null;
+            var click = action != null ? action.clickTool : null;
+            var active = action != null && click != null && click.active && action.activeTool == click;
+            var previews = active ? click.buildPreviews : null;
+            var count = previews != null ? previews.Count : 0;
+            json.Append(",\"planet_id\":").Append(GameMain.localPlanet.id);
+            json.Append(",\"game_tick\":").Append(GameMain.gameTick);
+            json.Append(",\"active\":").Append(active ? "true" : "false");
+            json.Append(",\"preview_count\":").Append(count);
+            json.Append(",\"single_preview\":");
+            if (count != 1 || previews[0] == null)
+                return json.Append("null}").ToString();
+            var preview = previews[0];
+            json.Append("{\"item_id\":");
+            if (preview.item != null) json.Append(preview.item.ID);
+            else json.Append("null");
+            json.Append(",\"position\":");
+            Vector(json, preview.lpos);
+            json.Append(",\"condition\":");
+            String(json, preview.condition.ToString());
+            json.Append(",\"cover_object_id\":").Append(preview.coverObjId);
+            json.Append(",\"connection_node\":").Append(preview.isConnNode ? "true" : "false");
+            return json.Append("}}").ToString();
+        }
+
         private static void Geo(StringBuilder json, Vector3 position)
         {
             int latDegrees, latMinutes, lonDegrees, lonMinutes;

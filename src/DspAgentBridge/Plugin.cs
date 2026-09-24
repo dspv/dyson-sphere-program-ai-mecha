@@ -7,7 +7,7 @@ using BepInEx;
 
 namespace DspAgentBridge
 {
-    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.5.0")]
+    [BepInPlugin("cc.cybrix.dsp-agent-bridge", "DSP Agent Bridge", "0.5.1")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private HttpListener listener;
@@ -24,6 +24,7 @@ namespace DspAgentBridge
             public readonly ManualResetEventSlim Done = new ManualResetEventSlim(false);
             public string Json;
             public int EntityId;
+            public bool BuildPreview;
         }
 
         private void Awake()
@@ -82,7 +83,11 @@ namespace DspAgentBridge
                 if (observationQueue.Count > 0) request = observationQueue.Dequeue();
             }
             if (request == null) return;
-            try { request.Json = request.EntityId > 0 ? Observer.CaptureEntity(sessionId, request.EntityId) : Observer.Capture(sessionId); }
+            try
+            {
+                request.Json = request.BuildPreview ? Observer.CaptureBuildPreview(sessionId) :
+                    request.EntityId > 0 ? Observer.CaptureEntity(sessionId, request.EntityId) : Observer.Capture(sessionId);
+            }
             catch (Exception error)
             {
                 Logger.LogError("Observation failed: " + error);
@@ -98,7 +103,7 @@ namespace DspAgentBridge
             response.Headers.Add("Cache-Control", "no-store");
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/health")
             {
-                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.5.0\",\"status\":\"stage_c_experimental\"}");
+                Write(response, 200, "{\"protocol_version\":1,\"bridge_version\":\"0.5.1\",\"status\":\"stage_c_experimental\"}");
                 return;
             }
             if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/observe")
@@ -117,6 +122,16 @@ namespace DspAgentBridge
                     return;
                 }
                 WriteObservation(response, new ObservationRequest { EntityId = entityId });
+                return;
+            }
+            if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/v1/build-preview")
+            {
+                if (context.Request.RawUrl.Length > 128 || context.Request.QueryString.Count != 0)
+                {
+                    Write(response, 400, Movement.Error("invalid_request"));
+                    return;
+                }
+                WriteObservation(response, new ObservationRequest { BuildPreview = true });
                 return;
             }
             if (context.Request.HttpMethod == "POST" &&

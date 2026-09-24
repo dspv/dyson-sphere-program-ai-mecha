@@ -3,7 +3,7 @@
 import argparse
 import json
 import sys
-from .client import BridgeError, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
+from .client import BridgeError, read_build_preview, read_entity, read_health, read_observation, read_operation, request_mine_vein, request_move_to_vein
 from .mcp_stdio import McpError, StdioMcpClient
 
 
@@ -17,6 +17,8 @@ def main(argv=None):
     entity = commands.add_parser("entity", help="Read one exact game entity and its assembler state")
     entity.add_argument("--bridge", default="http://127.0.0.1:38741")
     entity.add_argument("--entity-id", type=int, required=True)
+    preview = commands.add_parser("build-preview", help="Read the current UI construction preview")
+    preview.add_argument("--bridge", default="http://127.0.0.1:38741")
     move = commands.add_parser("move-to-vein", help="Order a walking mecha to one nearby vein")
     move.add_argument("--bridge", default="http://127.0.0.1:38741")
     move.add_argument("--session-id", required=True)
@@ -43,6 +45,8 @@ def main(argv=None):
             result = read_observation(args.bridge)
         elif args.command == "entity":
             result = read_entity(args.entity_id, args.bridge)
+        elif args.command == "build-preview":
+            result = read_build_preview(args.bridge)
         elif args.command == "move-to-vein":
             result = request_move_to_vein(args.session_id, args.vein_id, args.operation_id, args.bridge)
         elif args.command == "mine-vein":

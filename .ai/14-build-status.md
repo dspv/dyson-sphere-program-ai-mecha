@@ -41,8 +41,13 @@ These are coarse implementation indicators, not gameplay success rates. The same
 - An offline runner now asks injected providers for a goal and tactical experiment, supplies retrieved outcomes to the planner, records intent before action, and sends before/after observations to a separate verifier. Its allowlist and session checks prevent an unlisted action or stale result from silently passing. The only complete run is under fake providers; no real model selected a DSP goal and no game command was issued by the runner.
 - A Responses API adapter now offers two strictly structured proposals: a strategic and near-term goal, then one tactical inspect, walk, or mine experiment with a falsifiable prediction. Local validation bounds mining count and item IDs. HTTP tests use a fake opener; no key was used for a live request and no real model decision has been observed.
 - An experiment bridge adapter now stores raw private observation snapshots, rejects a plan when the relevant world state changed before submission, sends one observed walk/mine request, and polls the same operation ID within a fixed bound. A primitive verifier cross-checks operation results with fresh position or inventory and vein readback. Checked memory retrieval is limited to the same game version when known. All combined runner tests use fake bridge responses; the newly wired path has not been exercised in DSP and makes no production or strategic-goal claim.
+- Static inspection of the installed game build identified the active click construction tool and its bounded preview list. A read-only `/v1/build-preview` candidate returns active status, preview count, and one preview's item, position, condition, cover object, and connection-node flag. Bridge `0.5.1` compiled against the installed assembly with zero warnings and errors. The route has not been loaded or compared with the visible construction UI, and it cannot place a building.
 
 ## Log
+
+### 2026-09-24 — Read-only construction-preview candidate
+
+Decompiled the current installed Mono assembly without launching DSP. The active click tool owns a list of previews that the game's build tick updates before construction confirmation. Added a game-thread read of a single preview with an explicit count for zero or multiple previews; no method that consumes items or creates a prebuild is called. The bridge built with zero warnings and errors against the installed assembly, and the Python client passed a fake HTTP check. A visible comparison on a copied save remains required before using this field to guard a construction command.
 
 ### 2026-09-24 — Guarded bridge adapter and primitive action verifier
 

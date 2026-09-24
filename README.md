@@ -4,7 +4,7 @@ A research project for a self-directed agent that learns reusable gameplay skill
 
 ## Current status
 
-The bridge is compiled and loaded in the Windows DSP client. Stages A and B have visible checks on copied ordinary saves. An ordinary UI-built iron line produced ingots in two measured game-time windows, but the agent has not built it through bridge commands. Stage C remains partial, and no self-directed gameplay or demonstrated learning has occurred. An offline ledger and one-attempt runner now record goals, predictions, outcomes, and memory references; structured model and bridge adapters are tested with fake responses. The connected runner has not made a live model decision or issued a DSP command. The [AI-native research](docs/AI-NATIVE-RESEARCH.md) defines the model-chosen goal loop; see [build status](.ai/14-build-status.md) for evidence.
+The bridge has loaded in the Windows DSP client, and stages A and B have visible checks on copied ordinary saves. An ordinary UI-built iron line produced ingots in two measured game-time windows, but the agent has not built it through bridge commands. A new read-only construction-preview route compiles but has not run in the game. Stage C remains partial, and no self-directed gameplay or demonstrated learning has occurred. An offline ledger and one-attempt runner now record goals, predictions, outcomes, and memory references; structured model and bridge adapters are tested with fake responses. The connected runner has not made a live model decision or issued a DSP command. The [AI-native research](docs/AI-NATIVE-RESEARCH.md) defines the model-chosen goal loop; see [build status](.ai/14-build-status.md) for evidence.
 
 | Track             | Progress |
 | ----------------- | -------- |
